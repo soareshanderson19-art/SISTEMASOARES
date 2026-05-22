@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.ebenezer.sistema" version="1.0.0" xmlns="http://cordova.apache.org/ns/1.0" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+<widget id="com.soaresexpress.app" version="1.0.0" xmlns="http://cordova.apache.org/ns/1.0" xmlns:cdv="http://cordova.apache.org/ns/1.0">
     
-    <name>Nome do Seu App</name>
+    <name>Soares Express</name>
     
-    <description>Sistema de Entregas Ebenezer</description>
+    <description>Sistema de Entregas Soares Express</description>
     
     <author email="seu-email@gmail.com" href="https://github.com">
-        Seu Nome
+        Soares
     </author>
     
     <content src="index.html" />
@@ -19,13 +19,6 @@
     <preference name="EnableViewportScale" value="false" />
     <preference name="KeyboardDisplayRequiresUserAction" value="true" />
     <preference name="MediaPlaybackRequiresUserAction" value="false" />
-    <preference name="SuppressesIncrementalRendering" value="false" />
-    <preference name="SuppressesLongPressGesture" value="false" />
-    <preference name="Suppresses3DTouchGesture" value="false" />
-    <preference name="GapBetweenPages" value="0" />
-    <preference name="PageLength" value="0" />
-    <preference name="PaginationBreakingMode" value="page" />
-    <preference name="PaginationMode" value="unpaginated" />
     
     <platform name="android">
         <allow-intent href="market:*" />

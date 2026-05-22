@@ -499,7 +499,15 @@ function gerenciarPDF(acao) {
     const nomeArquivoSalvar = identificadorFechamento.replace(/\s+/g, '_') + '.pdf';
 
     if (acao === 'visualizar') {
-        window.open(doc.output('bloburl'), '_blank');
+        const blobUrl = doc.output('bloburl');
+        if (window.cordova && window.cordova.InAppBrowser) {
+            // Se estiver no aplicativo, baixa direto para a pasta de Downloads do celular
+            doc.save(nomeArquivoSalvar);
+        } else {
+            // Se estiver no computador, abre na aba normal do Chrome
+            window.open(blobUrl, '_blank');
+        }
+    }
     } 
     else if (acao === 'enviar') {
         doc.save(nomeArquivoSalvar);
@@ -566,7 +574,14 @@ function gerarPdfHistorico(index) {
     }
     const mesRef = itemHist.mesRef || "MÊS";
     const doc = construirDocumentoPDF(itemHist.id, mesRef, itemHist.dados);
-    window.open(doc.output('bloburl'), '_blank');
+    
+    if (window.cordova && window.cordova.InAppBrowser) {
+        const nomeArquivoSalvar = itemHist.id.replace(/\s+/g, '_') + '.pdf';
+        doc.save(nomeArquivoSalvar);
+    } else {
+        window.open(doc.output('bloburl'), '_blank');
+    }
+}
 }
 window.gerarPdfHistorico = gerarPdfHistorico;
 

@@ -1,0 +1,34 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.ebenezer.sistema" version="1.0.0" xmlns="http://cordova.apache.org/ns/1.0" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    
+    <name>Nome do Seu App</name>
+    
+    <description>Sistema de Entregas Ebenezer</description>
+    
+    <author email="seu-email@gmail.com" href="https://github.com">
+        Seu Nome
+    </author>
+    
+    <content src="index.html" />
+    
+    <icon src="logo.png" />
+    
+    <preference name="AllowInlineMediaPlayback" value="false" />
+    <preference name="BackupWebStorage" value="cloud" />
+    <preference name="DisallowOverscroll" value="false" />
+    <preference name="EnableViewportScale" value="false" />
+    <preference name="KeyboardDisplayRequiresUserAction" value="true" />
+    <preference name="MediaPlaybackRequiresUserAction" value="false" />
+    <preference name="SuppressesIncrementalRendering" value="false" />
+    <preference name="SuppressesLongPressGesture" value="false" />
+    <preference name="Suppresses3DTouchGesture" value="false" />
+    <preference name="GapBetweenPages" value="0" />
+    <preference name="PageLength" value="0" />
+    <preference name="PaginationBreakingMode" value="page" />
+    <preference name="PaginationMode" value="unpaginated" />
+    
+    <platform name="android">
+        <allow-intent href="market:*" />
+    </platform>
+    
+</widget>

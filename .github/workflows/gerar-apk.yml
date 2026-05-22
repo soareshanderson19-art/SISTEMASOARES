@@ -1,0 +1,49 @@
+name: Gerar APK Automático
+
+on:
+  push:
+    branches:
+      - main # Executa toda vez que você atualizar a branch 'main'
+  workflow_dispatch: # Permite que você clique em um botão para gerar manualmente
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar o Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-node: 18
+
+      - name: Configurar o Java (Necessário para Android)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Instalar o Cordova (Transformador Web para App)
+        run: npm install -g cordova
+
+      - name: Criar Projeto Android
+        run: |
+          cordova create meu-app com.exemplo.meuapp "Meu Aplicativo"
+          # Copia os arquivos do seu site para dentro da pasta do App
+          # Se o seu site estiver numa pasta como 'dist', mude o '.' abaixo para './dist'
+          cp -r ./* meu-app/www/ 2>/dev/null || true 
+          cd meu-app
+          cordova platform add android
+
+      - name: Compilar o APK de Teste (Debug)
+        run: |
+          cd meu-app
+          cordova build android --debug
+
+      - name: Salvar o APK gerado como resultado
+        uses: actions/upload-artifact@v4
+        with:
+          name: meu-aplicativo-apk
+          path: meu-app/platforms/android/app/build/outputs/apk/debug/app-debug.apk

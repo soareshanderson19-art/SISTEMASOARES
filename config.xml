@@ -23,10 +23,9 @@
     <platform name="android">
         <allow-intent href="market:*" />
         
-        <allow-navigation href="http://*/*" />
-        <allow-navigation href="https://*/*" />
-        <allow-intent href="http://*/*" />
-        <allow-intent href="https://*/*" />
+        <allow-navigation href="*" />
+        <allow-intent href="*" />
+        <preference name="StayInApp" value="false" />
     </platform>
     
     <plugin name="cordova-plugin-inappbrowser" />

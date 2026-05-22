@@ -36,10 +36,11 @@ jobs:
           cp logo.png meu-app/logo.png 2>/dev/null || true
           
           # Copia os arquivos do seu site para a pasta do app
-          cp -r ./* meu-app/www/ 2>/dev/null || true 
+          cp -r ./* meu-app/www/ 2>/dev/null || true
           cd meu-app
+          cordova plugin add cordova-plugin-inappbrowser
           cordova platform add android
-
+          
       - name: Compilar o APK de Teste (Debug)
         run: |
           cd meu-app

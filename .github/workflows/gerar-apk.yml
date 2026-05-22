@@ -30,9 +30,12 @@ jobs:
 
       - name: Criar Projeto Android
         run: |
-          cordova create meu-app com.exemplo.meuapp "Meu Aplicativo"
-          # Copia os arquivos do seu site para dentro da pasta do App
-          # Se o seu site estiver numa pasta como 'dist', mude o '.' abaixo para './dist'
+          cordova create meu-app com.soaresexpress.app "App"
+          # Copia as configurações e o ícone do seu repositório
+          cp config.xml meu-app/config.xml 2>/dev/null || true
+          cp logo.png meu-app/logo.png 2>/dev/null || true
+          
+          # Copia os arquivos do seu site para a pasta do app
           cp -r ./* meu-app/www/ 2>/dev/null || true 
           cd meu-app
           cordova platform add android

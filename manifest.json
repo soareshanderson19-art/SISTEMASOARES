@@ -1,0 +1,22 @@
+{
+  "theme_color": "#ff6600",
+  "background_color": "#0c0c0e",
+  "display": "standalone",
+  "scope": "/",
+  "start_url": "/index.html",
+  "name": "Soares Express",
+  "short_name": "Soares Express",
+  "description": "Sistema de Lançamento de Entregas e Fechamentos",
+  "icons": [
+    {
+      "src": "soares-icon192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "soares-icon512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

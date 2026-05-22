@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soares Express - Sistema de Entregas</title>
+    <link rel="shortcut icon" href="icon.png" type="image/x-icon">
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+    <script src="script.js" defer></script>
+</head>
+<body>
+
+    <header class="header-timbrado">
+        <div class="logo-text">SOARES EXPRESS</div>
+        <p>Sistema de Gestão de Logística & Entregas</p>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="tab-btn active" id="btn-aba-lancamentos">Lançamentos</button>
+        <button class="tab-btn" id="btn-aba-clientes">Cadastrar Clientes</button>
+        <button class="tab-btn" id="btn-aba-relatorios">Relação & Fechamento</button>
+    </nav>
+
+    <main class="container">
+        
+        <section id="aba-lancamentos" class="tab-content active">
+            <h2>Lançar Nova Entrega</h2>
+            <form id="form-entrega">
+                <div class="form-group">
+                    <label for="select-cliente-entrega">Selecionar Cliente do Mês:</label>
+                    <select id="select-cliente-entrega" required>
+                        <option value="">-- Selecione um Cliente --</option>
+                    </select>
+                </div>
+
+                <div class="grid-inputs">
+                    <div class="form-group">
+                        <label for="date-input">1. Data:</label>
+                        <input type="date" id="date-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end-coleta">2. Endereço de Coleta:</label>
+                        <input type="text" id="end-coleta" placeholder="Rua, Número, Bairro" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="end-entrega">3. Endereço de Entrega:</label>
+                        <input type="text" id="end-entrega" placeholder="Rua, Número, Bairro" required>
+                    </div>
+                    <div class="form-group">
+                        <label>4. Retorno?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="retorno" value="Sim" checked> Sim</label>
+                            <label><input type="radio" name="retorno" value="Não"> Não</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="espera">5. Quantidade de Esperas:</label>
+                        <select id="espera">
+                            <option value="Sem Espera">Sem Espera</option>
+                            <option value="1">1 Espera</option>
+                            <option value="2">2 Esperas</option>
+                            <option value="3">3 Esperas</option>
+                            <option value="4">4 Esperas</option>
+                            <option value="5">5 Esperas</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="valor">6. Valor (R$):</label>
+                        <input type="number" id="valor" step="0.01" placeholder="0,00" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-sucesso">Salvar Entrega</button>
+            </form>
+        </section>
+
+        <section id="aba-clientes" class="tab-content">
+            <h2>Cadastrar Novo Cliente</h2>
+            <form id="form-cliente">
+                <div class="form-group">
+                    <label for="nome-cliente">Nome do Cliente / Empresa:</label>
+                    <input type="text" id="nome-cliente" placeholder="Ex: Shopping João Pessoa, Parker Foods..." required>
+                </div>
+                <button type="submit" class="btn btn-alerta">Cadastrar Cliente</button>
+            </form>
+
+            <h3 style="margin-top: 30px; color: var(--cor-laranja);">Clientes Cadastrados</h3>
+            <ul id="lista-clientes" class="lista-custom"></ul>
+        </section>
+
+        <section id="aba-relatorios" class="tab-content">
+            <h2>Relação Mensal e Fechamento</h2>
+            
+            <div class="form-group">
+                <label for="filtro-cliente">Filtrar por Cliente para Fechamento:</label>
+                <select id="filtro-cliente">
+                    <option value="todos">Todos os Clientes (Geral)</option>
+                </select>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Coleta</th>
+                            <th>Entrega</th>
+                            <th>Retorno</th>
+                            <th>Espera</th>
+                            <th>Valor</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo"></tbody>
+                </table>
+            </div>
+
+            <div class="total-container">
+                <span>Total Filtrado: <strong id="valor-total-mensal">R$ 0,00</strong></span>
+            </div>
+
+            <div class="action-buttons">
+                <h2>Ações de Fechamento do Cliente Selecionado</h2>
+                <p style="color: #aaa; margin-bottom: 15px; font-size: 0.9rem;">Escolha uma das opções abaixo para gerenciar o PDF timbrado.</p>
+                
+                <div class="botoes-alinhados">
+                    <button class="btn btn-fechamento" id="btn-pdf-visualizar" style="background: #1a53ff; flex: 1;">👁️ Apenas Visualizar PDF</button>
+                    <button class="btn btn-fechamento" id="btn-pdf-enviar" style="background: #25d366; color: white; flex: 1;">📱 Enviar PDF via WhatsApp</button>
+                    <button class="btn btn-fechamento" id="btn-pdf-fechar" style="flex: 1.5;">🔒 Fechar Mês Definitivo (Salva & Zera)</button>
+                </div>
+            </div>
+            
+            <hr style="border: 1px solid #333; margin: 40px 0;">
+            
+            <h2>Histórico de Meses Fechados (Editar/Consultar)</h2>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 50%;">Identificador do Fechamento</th>
+                            <th style="width: 50%;">Ações de Recuperação e Consulta</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-historico"></tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+</body>
+</html>

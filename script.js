@@ -391,6 +391,38 @@ function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
     }, function(err) { alert("Erro de diretório: " + JSON.stringify(err)); });
 }
 
+// Função auxiliar interna para processar o download nativo no celular
+function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
+    if (!window.cordova || !window.resolveLocalFileSystemURL) {
+        alert("Erro: Plugins móveis ausentes ou corrompidos.");
+        return;
+    }
+
+    const pdfOutput = jsPdfDoc.output('arraybuffer');
+    const pastaAlvo = cordova.file.cacheDirectory;
+
+    window.resolveLocalFileSystemURL(pastaAlvo, function (dirEntry) {
+        dirEntry.getFile(nomeArquivo, { create: true, exclusive: false }, function (fileEntry) {
+            fileEntry.createWriter(function (fileWriter) {
+                fileWriter.onwriteend = function () {
+                    cordova.plugins.fileOpener2.open(
+                        fileEntry.toURL(),
+                        'application/pdf',
+                        {
+                            error: function (e) {
+                                alert('Instale um leitor de PDF (Ex: Google Drive PDF ou Adobe Reader) para visualizar o fechamento.');
+                            },
+                            success: function () { console.log('NATIVO: PDF aberto com sucesso.'); }
+                        }
+                    );
+                };
+                fileWriter.onerror = function (e) { alert("Falha ao processar o armazenamento de dados temporários."); };
+                fileWriter.write(new Blob([pdfOutput], { type: 'application/pdf' }));
+            }, function(err) { alert("Erro de fluxo: " + JSON.stringify(err)); });
+        }, function(err) { alert("Erro de arquivo: " + JSON.stringify(err)); });
+    }, function(err) { alert("Erro de diretório: " + JSON.stringify(err)); });
+}
+
 function gerenciarPDF(acao) {
     const filtroCliente = document.getElementById('filtro-cliente').value;
     const entregasFiltradas = filtroCliente === 'todos' ? entregas : entregas.filter(e => e.cliente === filtroCliente);
@@ -410,7 +442,7 @@ function gerenciarPDF(acao) {
     if (acao === 'visualizar') {
         if (window.cordova) abrirPdfNoCelular(doc, nomeArquivoSalvar);
         else window.open(doc.output('bloburl'), '_blank');
-    }
+    } 
     else if (acao === 'enviar') {
         if (!window.cordova) doc.save(nomeArquivoSalvar);
         let totalAcumulado = entregasFiltradas.reduce((acc, current) => acc + current.valor, 0);

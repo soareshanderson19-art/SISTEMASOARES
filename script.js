@@ -16,7 +16,7 @@ let clientes = [];
 let entregas = [];
 let historicoFechamentos = [];
 
-// Inicializador Geral do Sistema
+// Substitua APENAS o bloco dentro do DOMContentLoaded por este:
 document.addEventListener("DOMContentLoaded", function() {
     console.log("SISTEMA: Inicializando...");
 
@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('date-input').valueAsDate = new Date();
     }
     
+    // Configura as abas primeiro para garantir o funcionamento
     configurarCliqueAbas();
 
     try {
@@ -43,17 +44,15 @@ document.addEventListener("DOMContentLoaded", function() {
         filtroCliente.addEventListener('change', atualizarTabelaEntregas);
     }
 
-    if(document.getElementById('btn-pdf-visualizar')) {
-        document.getElementById('btn-pdf-visualizar').addEventListener('click', () => gerenciarPDF('visualizar'));
-    }
-    if(document.getElementById('btn-pdf-enviar')) {
-        document.getElementById('btn-pdf-enviar').addEventListener('click', () => gerenciarPDF('enviar'));
-    }
-    if(document.getElementById('btn-pdf-fechar')) {
-        document.getElementById('btn-pdf-fechar').addEventListener('click', () => gerenciarPDF('fechar'));
-    }
-});
+    // PROTEÇÃO CONTRA TRAVAMENTOS (Verifica se o botão realmente existe antes de ativar)
+    const btnVisualizar = document.getElementById('btn-pdf-visualizar');
+    const btnEnviar = document.getElementById('btn-pdf-enviar');
+    const btnFechar = document.getElementById('btn-pdf-fechar');
 
+    if(btnVisualizar) btnVisualizar.addEventListener('click', () => gerenciarPDF('visualizar'));
+    if(btnEnviar) btnEnviar.addEventListener('click', () => gerenciarPDF('enviar'));
+    if(btnFechar) btnFechar.addEventListener('click', () => gerenciarPDF('fechar'));
+});
 function inicializarOuvintesFirebase() {
     if (!database) return;
 

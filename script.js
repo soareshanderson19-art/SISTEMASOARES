@@ -275,125 +275,187 @@ function obtenerNomeMes(dataString) {
     return meses[parseInt(partes[1], 10) - 1] || "MÊS";
 }
 
-function construirDocumentoPDF(tituloFechamento, nomeMes, listaServicos) {
+function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
     const { jsPDF } = window.jspdf;
+    // Criando documento no formato A4, unidade em milímetros (mm)
     const doc = new jsPDF('p', 'mm', 'a4');
-    
-    const corPrimaria = [22, 22, 26]; const corSecundaria = [255, 102, 0]; const corAcento = [204, 0, 0];      
-    const corFundoTabela = [245, 246, 248]; const corLinha = [210, 215, 223];     
-    
-    let totalGeral = 0; let yPos = 55; let numeroPagina = 1;
 
-    function desenharCabecalhoTimbrado() {
-        doc.setFillColor(corPrimaria[0], corPrimaria[1], corPrimaria[2]); doc.rect(0, 0, 210, 38, 'F');
-        doc.setFillColor(corSecundaria[0], corSecundaria[1], corSecundaria[2]); doc.rect(0, 38, 210, 2, 'F');
-        doc.setFillColor(corAcento[0], corAcento[1], corAcento[2]); doc.rect(0, 40, 210, 1, 'F');
-        doc.setTextColor(255, 255, 255); doc.setFont("Helvetica", "Bold"); doc.setFontSize(24); doc.text("SOARES EXPRESS", 15, 18);
-        doc.setFont("Helvetica", "Oblique"); doc.setFontSize(9); doc.setTextColor(180, 180, 180); doc.text("LOGÍSTICA INTELIGENTE & ENTREGAS RÁPIDAS", 15, 25);
-        doc.setFillColor(35, 35, 40); doc.rect(130, 8, 65, 22, 'F');
-        doc.setDrawColor(corSecundaria[0], corSecundaria[1], corSecundaria[2]); doc.setLineWidth(0.5); doc.rect(130, 8, 65, 22, 'S');
-        doc.setTextColor(255, 255, 255); doc.setFont("Helvetica", "Bold"); doc.setFontSize(8); doc.text("RELATÓRIO DE FECHAMENTO", 134, 14);
-        doc.setFont("Helvetica", "Normal"); doc.setFontSize(7); doc.setTextColor(200, 200, 200);
-        doc.text(`Data Emissão: ${new Date().toLocaleDateString('pt-BR')}`, 134, 20);
-        doc.text(`Competência: ${nomeMes}/${new Date().getFullYear()}`, 134, 25);
-    }
+    // --- CONFIGURAÇÃO DE CORES (PALETA CORPORATIVA) ---
+    const COR_PRIMARIA = [25, 25, 25];     // Cinza Escuro Executivo
+    const COR_ACENTO = [255, 102, 0];     // Laranja Soares Express
+    const COR_TEXTO = [60, 60, 60];       // Grafite para leitura confortável
+    const COR_LINHA_ALT = [245, 245, 247]; // Fundo cinza suave para linhas pares
 
-    function desenharRodape() {
-        doc.setDrawColor(corLinha[0], corLinha[1], corLinha[2]); doc.setLineWidth(0.3); doc.line(15, 282, 195, 282);
-        doc.setFont("Helvetica", "Normal"); doc.setFontSize(8); doc.setTextColor(120, 120, 120);
-        doc.text("Soares Express Logística - Documento gerado via sistema oficial.", 15, 287);
-        doc.text(`Página ${numeroPagina}`, 185, 287);
-    }
+    // --- CABEÇALHO DO DOCUMENTO ---
+    // Faixa estilizada no topo
+    doc.setFillColor(COR_PRIMARIA[0], COR_PRIMARIA[1], COR_PRIMARIA[2]);
+    doc.rect(0, 0, 210, 38, 'F');
 
-    desenharCabecalhoTimbrado(); desenharRodape();
-    doc.setTextColor(corPrimaria[0], corPrimaria[1], corPrimaria[2]); doc.setFont("Helvetica", "Bold"); doc.setFontSize(13);
-    doc.text(tituloFechamento.split(" (Fechado")[0], 15, yPos);
-    
-    yPos += 8;
-    doc.setFillColor(corPrimaria[0], corPrimaria[1], corPrimaria[2]); doc.rect(15, yPos, 180, 8, 'F');
-    doc.setTextColor(255, 255, 255); doc.setFont("Helvetica", "Bold"); doc.setFontSize(8.5);
-    doc.text("DATA", 17, yPos + 5.5); doc.text("ROTA (COLETA -> ENTREGA)", 40, yPos + 5.5); doc.text("RETORNO", 130, yPos + 5.5); doc.text("ESPERA", 155, yPos + 5.5); doc.text("VALOR", 178, yPos + 5.5);
-    yPos += 8;
+    // Linha de detalhe em Laranja
+    doc.setFillColor(COR_ACENTO[0], COR_ACENTO[1], COR_ACENTO[2]);
+    doc.rect(0, 38, 210, 2, 'F');
 
-    let listagemOrdenada = [...listaServicos];
-    listagemOrdenada.sort((a,b) => new Date(a.data) - new Date(b.data));
-    let alternarCorRow = false;
+    // Nome da Empresa
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(22);
+    doc.text("SOARES EXPRESS", 14, 18);
 
-    listagemOrdenada.forEach(e => {
-        totalGeral += e.valor;
-        if (yPos > 265) {
-            numeroPagina++; doc.addPage(); desenharCabecalhoTimbrado(); desenharRodape(); yPos = 50;
-            doc.setFillColor(corPrimaria[0], corPrimaria[1], corPrimaria[2]); doc.rect(15, yPos, 180, 8, 'F');
-            doc.setTextColor(255, 255, 255); doc.setFont("Helvetica", "Bold"); doc.setFontSize(8.5);
-            doc.text("DATA", 17, yPos + 5.5); doc.text("ROTA (COLETA -> ENTREGA)", 40, yPos + 5.5); doc.text("RETORNO", 130, yPos + 5.5); doc.text("ESPERA", 155, yPos + 5.5); doc.text("VALOR", 178, yPos + 5.5);
-            yPos += 8;
-        }
+    // Subtítulo do Cabeçalho
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(200, 200, 200);
+    doc.text("Logística Integrada & Prestação de Serviços Urbanos", 14, 24);
+    doc.text("Contato: financeiro@soaresexpress.com", 14, 29);
 
-        if (alternarCorRow) { doc.setFillColor(corFundoTabela[0], corFundoTabela[1], corFundoTabela[2]); doc.rect(15, yPos, 180, 7.5, 'F'); }
-        alternarCorRow = !alternarCorRow;
-        doc.setDrawColor(corLinha[0], corLinha[1], corLinha[2]); doc.setLineWidth(0.1); doc.line(15, yPos + 7.5, 195, yPos + 7.5);
-        doc.setTextColor(40, 40, 40); doc.setFont("Helvetica", "Normal"); doc.setFontSize(8);
+    // Metadados do Fechamento (Alinhado à Direita)
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text(`MÊS DE REF: ${mesReferencia.toUpperCase()}`, 196, 18, { align: 'right' });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-BR')}`, 196, 24, { align: 'right' });
+    doc.text("Documento Oficial de Prestação de Contas", 196, 29, { align: 'right' });
 
-        doc.text(e.data.split('-').reverse().join('/'), 17, yPos + 5);
-        let rotaTexto = `${e.coleta} -> ${e.entrega}`;
-        if (rotaTexto.length > 52) rotaTexto = rotaTexto.substring(0, 49) + "...";
-        doc.text(rotaTexto, 40, yPos + 5); doc.text(e.retorno, 133, yPos + 5);
-        doc.text(e.espera === "Sem Espera" ? "-" : e.espera, 159, yPos + 5);
-        doc.text(`R$ ${e.valor.toFixed(2)}`, 176, yPos + 5);
-        yPos += 7.5;
+    // --- TÍTULO DO RELATÓRIO ---
+    doc.setTextColor(COR_PRIMARIA[0], COR_PRIMARIA[1], COR_PRIMARIA[2]);
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.text(tituloFechamento.toUpperCase(), 14, 52);
+
+    // --- TABELA DE PRESTAÇÃO DE SERVIÇOS ---
+    // Definição das Colunas e Larguras Fixas (Totalizando 182mm para caber na página com margem)
+    const colunas = [
+        { label: "Data", width: 18 },
+        { label: "Origem (Coleta)", width: 44 },
+        { label: "Destino (Entrega)", width: 44 },
+        { label: "Ret.", width: 12 },
+        { label: "Exp.", width: 12 },
+        { label: "Espera", width: 28 },
+        { label: "Valor (R$)", width: 24 }
+    ];
+
+    let posY = 58; // Posição inicial da tabela
+
+    // Desenhando o Cabeçalho da Tabela
+    doc.setFillColor(COR_PRIMARIA[0], COR_PRIMARIA[1], COR_PRIMARIA[2]);
+    doc.rect(14, posY, 182, 7, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+
+    let posX = 14;
+    colunas.forEach(col => {
+        // Alinha o texto do valor à direita, os demais à esquerda
+        const alignOption = col.label === "Valor (R$)" ? { align: 'right' } : undefined;
+        const textX = col.label === "Valor (R$)" ? posX + col.width - 2 : posX + 2;
+        doc.text(col.label, textX, posY + 5, alignOption);
+        posX += col.width;
     });
 
-    yPos += 6;
-    if (yPos > 250) { numeroPagina++; doc.addPage(); desenharCabecalhoTimbrado(); desenharRodape(); yPos = 50; }
-    doc.setFillColor(240, 242, 245); doc.rect(115, yPos, 80, 18, 'F');
-    doc.setDrawColor(corPrimaria[0], corPrimaria[1], corPrimaria[2]); doc.setLineWidth(0.4); doc.rect(115, yPos, 80, 18, 'S');
-    doc.setFillColor(corSecundaria[0], corSecundaria[1], corSecundaria[2]); doc.rect(115, yPos, 2, 18, 'F');
-    doc.setTextColor(80, 80, 80); doc.setFont("Helvetica", "Bold"); doc.setFontSize(8); doc.text("TOTAL LÍQUIDO A PAGAR", 121, yPos + 5);
-    doc.setTextColor(corAcento[0], corAcento[1], corAcento[2]); doc.setFont("Helvetica", "Bold"); doc.setFontSize(14); doc.text(`R$ ${totalGeral.toFixed(2)}`, 121, yPos + 13);
+    posY += 7; // Avança para a primeira linha de dados
+
+    // Desenhando as Linhas de Dados
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    let totalGeral = 0;
+
+    dadosEntregas.forEach((item, index) => {
+        // Controle de quebra de página caso o relatório seja muito longo
+        if (posY > 270) {
+            doc.addPage();
+            posY = 20;
+            // Replica o cabeçalho da tabela na nova página
+            doc.setFillColor(COR_PRIMARIA[0], COR_PRIMARIA[1], COR_PRIMARIA[2]);
+            doc.rect(14, posY, 182, 7, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            let pX = 14;
+            colunas.forEach(col => {
+                const alignOption = col.label === "Valor (R$)" ? { align: 'right' } : undefined;
+                const textX = col.label === "Valor (R$)" ? pX + col.width - 2 : pX + 2;
+                doc.text(col.label, textX, posY + 5, alignOption);
+                pX += col.width;
+            });
+            posY += 7;
+            doc.setFont("helvetica", "normal");
+        }
+
+        // Fundo alternado (Efeito zebrado)
+        if (index % 2 === 0) {
+            doc.setFillColor(COR_LINHA_ALT[0], COR_LINHA_ALT[1], COR_LINHA_ALT[2]);
+            doc.rect(14, posY, 182, 6.5, 'F');
+        }
+
+        // Borda inferior bem fina para separar os registros
+        doc.setDrawColor(230, 230, 230);
+        doc.setLineWidth(0.1);
+        doc.line(14, posY + 6.5, 196, posY + 6.5);
+
+        doc.setTextColor(COR_TEXTO[0], COR_TEXTO[1], COR_TEXTO[2]);
+        
+        let pX = 14;
+        const dataFormatada = item.data.split('-').reverse().join('/');
+        const valorNum = parseFloat(item.valor) || 0;
+        totalGeral += valorNum;
+
+        // Limita o texto para não estourar a largura da célula caso o endereço seja gigante
+        const limitText = (txt, maxW) => doc.clipToConstraints ? txt : doc.splitTextToSize(txt, maxW - 3)[0] || txt;
+
+        doc.text(dataFormatada, pX + 2, posY + 4.5);
+        pX += colunas[0].width;
+        doc.text(limitText(item.coleta, colunas[1].width), pX + 2, posY + 4.5);
+        pX += colunas[1].width;
+        doc.text(limitText(item.entrega, colunas[2].width), pX + 2, posY + 4.5);
+        pX += colunas[2].width;
+        doc.text(item.retorno || "Não", pX + 2, posY + 4.5);
+        pX += colunas[3].width;
+        doc.text(item.express || "Não", pX + 2, posY + 4.5);
+        pX += colunas[4].width;
+        doc.text(item.espera || "Sem Espera", pX + 2, posY + 4.5);
+        pX += colunas[5].width;
+        doc.text(valorNum.toFixed(2), pX + colunas[6].width - 2, posY + 4.5, { align: 'right' });
+
+        posY += 6.5;
+    });
+
+    // --- BLOCO DE FECHAMENTO FINANCEIRO ---
+    posY += 5; // Margemzinha de distanciamento da tabela
+    
+    // Caixa de resumo totalizador
+    doc.setFillColor(COR_LINHA_ALT[0], COR_LINHA_ALT[1], COR_LINHA_ALT[2]);
+    doc.setDrawColor(COR_PRIMARIA[0], COR_PRIMARIA[1], COR_PRIMARIA[2]);
+    doc.setLineWidth(0.3);
+    doc.rect(120, posY, 76, 14, 'DF');
+
+    doc.setTextColor(COR_TEXTO[0], COR_TEXTO[1], COR_TEXTO[2]);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text("VALOR LIQUIDO TOTAL:", 124, posY + 9);
+
+    doc.setTextColor(COR_ACENTO[0], COR_ACENTO[1], COR_ACENTO[2]);
+    doc.setFontSize(13);
+    doc.setFont("helvetica", "bold");
+    doc.text(`R$ ${totalGeral.toFixed(2)}`, 192, posY + 9.5, { align: 'right' });
+
+    // --- ASSINATURAS / RODAPÉ ---
+    posY += 28;
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineWidth(0.2);
+    // Linha de assinatura da Soares Express
+    doc.line(14, posY, 80, posY);
+    // Linha de assinatura do Cliente contratante
+    doc.line(130, posY, 196, posY);
+
+    doc.setTextColor(120, 120, 120);
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("Responsável Soares Express", 47, posY + 4, { align: 'center' });
+    doc.text("Assinatura do Cliente / Carimbo", 163, posY + 4, { align: 'center' });
 
     return doc;
 }
-
-// ABERTURA NATIVA COM PLUGINS MODERNOS DO CAPACITOR
-// ABERTURA NATIVA COM PLUGINS MODERNOS DO CAPACITOR
-async function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
-    if (!window.Capacitor) {
-        alert("Ambiente mobile não inicializado.");
-        return;
-    }
-
-    // Transforma o PDF em String Base64 limpa
-    const pdfBase64 = jsPdfDoc.output('datauristring').split(',')[1];
-
-    try {
-        // Grava o arquivo direto no diretório de cache privado do app (Livre de bloqueios de permissão)
-        const resultadoGravacao = await window.Capacitor.Plugins.Filesystem.writeFile({
-            path: nomeArquivo,
-            data: pdfBase64,
-            directory: 'CACHE'
-        });
-
-        // Abre o leitor passando a URL interna segura do arquivo
-        await window.Capacitor.Plugins.FileOpener.open({
-            filePath: resultadoGravacao.uri,
-            contentType: 'application/pdf'
-        });
-
-        console.log("CAPACITOR: PDF aberto perfeitamente na tela.");
-    } catch (erro) {
-        console.error("Erro interno do Capacitor:", erro);
-        alert("Não foi possível abrir o PDF diretamente. Verifique se possui o Google Drive PDF ou Adobe Reader instalado.");
-    }
-}
-
-function gerenciarPDF(acao) {
-    const filtroCliente = document.getElementById('filtro-cliente').value;
-    const entregasFiltradas = filtroCliente === 'todos' ? entregas : entregas.filter(e => e.cliente === filtroCliente);
-
-    if (entregasFiltradas.length === 0) {
-        alert("Não existem entregas lançadas neste período para este cliente.");
-        return;
-    }
     
     // AGORA PEGA O MÊS SELECIONADO MANUALMENTE PELO USUÁRIO
     const campoMes = document.getElementById('selecao-mes-fechamento');

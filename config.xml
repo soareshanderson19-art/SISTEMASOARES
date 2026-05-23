@@ -34,8 +34,8 @@
         </config-file>
     </platform>
     
-    <plugin name="cordova-plugin-inappbrowser" />
-    <plugin name="cordova-plugin-file" />
-    <plugin name="cordova-plugin-file-opener2" />
+    <plugin name="cordova-plugin-inappbrowser" spec="^6.0.0" />
+    <plugin name="cordova-plugin-file" spec="^8.1.0" />
+    <plugin name="cordova-plugin-file-opener2" spec="^4.0.0" />
 
 </widget>

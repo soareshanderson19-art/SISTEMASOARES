@@ -13,28 +13,28 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
+    <script src="cordova.js"></script>
     <script src="script.js" defer></script>
 </head>
 <body>
 
-    <header class="header-timbrado">
+    <header class=\"header-timbrado\">
         <div class="logo-text">SOARES EXPRESS</div>
         <p>Sistema de Gestão de Logística & Entregas</p>
     </header>
 
     <nav class="nav-tabs">
         <button class="tab-btn active" id="btn-aba-lancamentos">Lançamentos</button>
-        <button class="tab-btn" id="btn-aba-clientes">Cadastrar Clientes</button>
-        <button class="tab-btn" id="btn-aba-relatorios">Relação & Fechamento</button>
+        <button class="tab-btn" id="btn-aba-clientes">Clientes</button>
+        <button class="tab-btn" id="btn-aba-relatorios">Relatórios & Histórico</button>
     </nav>
 
-    <main class="container">
-        
-        <section id="aba-lancamentos" class="tab-content active">
-            <h2>Lançar Nova Entrega</h2>
+    <div class="container">
+        <div class="tab-content active" id="aba-lancamentos">
+            <h2>Lançar Nova Entrega / Serviço</h2>
             <form id="form-entrega">
                 <div class="form-group">
-                    <label for="select-cliente-entrega">Selecionar Cliente do Mês:</label>
+                    <label for="select-cliente-entrega">Cliente Destinatário:</label>
                     <select id="select-cliente-entrega" required>
                         <option value="">-- Selecione um Cliente --</option>
                     </select>
@@ -42,63 +42,67 @@
 
                 <div class="grid-inputs">
                     <div class="form-group">
-                        <label for="date-input">1. Data:</label>
+                        <label for="date-input">Data do Serviço:</label>
                         <input type="date" id="date-input" required>
                     </div>
                     <div class="form-group">
-                        <label for="end-coleta">2. Endereço de Coleta:</label>
-                        <input type="text" id="end-coleta" placeholder="Rua, Número, Bairro" required>
+                        <label for="valor">Valor do Serviço (R$):</label>
+                        <input type="number" step="0.01" id="valor" placeholder="Ex: 45.00" required>
+                    </div>
+                </div>
+
+                <div class="grid-inputs">
+                    <div class="form-group">
+                        <label for="end-coleta">Ponto de Coleta:</label>
+                        <input type="text" id="end-coleta" placeholder="Rua, Bairro ou Empresa de origem" required>
                     </div>
                     <div class="form-group">
-                        <label for="end-entrega">3. Endereço de Entrega:</label>
-                        <input type="text" id="end-entrega" placeholder="Rua, Número, Bairro" required>
+                        <label for="end-entrega">Ponto de Entrega:</label>
+                        <input type="text" id="end-entrega" placeholder="Rua, Bairro ou Empresa de destino" required>
                     </div>
+                </div>
+
+                <div class="grid-inputs">
                     <div class="form-group">
-                        <label>4. Retorno?</label>
+                        <label>Retorno?</label>
                         <div class="radio-group">
-                            <label><input type="radio" name="retorno" value="Sim" checked> Sim</label>
-                            <label><input type="radio" name="retorno" value="Não"> Não</label>
+                            <label><input type="radio" name="retorno" value="Não" checked> Não</label>
+                            <label><input type="radio" name="retorno" value="Sim"> Sim</label>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="espera">5. Quantidade de Esperas:</label>
+                        <label for="espera">Tempo de Espera:</label>
                         <select id="espera">
                             <option value="Sem Espera">Sem Espera</option>
                             <option value="1">1 Espera</option>
                             <option value="2">2 Esperas</option>
                             <option value="3">3 Esperas</option>
-                            <option value="4">4 Esperas</option>
-                            <option value="5">5 Esperas</option>
+                            <option value="4">4+ Esperas</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label for="valor">6. Valor (R$):</label>
-                        <input type="number" id="valor" step="0.01" placeholder="0,00" required>
-                    </div>
                 </div>
-                <button type="submit" class="btn btn-sucesso">Salvar Entrega</button>
-            </form>
-        </section>
 
-        <section id="aba-clientes" class="tab-content">
+                <button type="submit" class="btn btn-sucesso">Confirmar e Registrar Serviço</button>
+            </form>
+        </div>
+
+        <div class="tab-content" id="aba-clientes">
             <h2>Cadastrar Novo Cliente</h2>
             <form id="form-cliente">
                 <div class="form-group">
-                    <label for="nome-cliente">Nome do Cliente / Empresa:</label>
-                    <input type="text" id="nome-cliente" placeholder="Ex: Shopping João Pessoa, Parker Foods..." required>
+                    <label for="nome-cliente">Nome Completo / Razão Social:</label>
+                    <input type="text" id="nome-cliente" placeholder="Ex: Soares Logística LTDA" required>
                 </div>
-                <button type="submit" class="btn btn-alerta">Cadastrar Cliente</button>
+                <button type="submit" class="btn btn-sucesso">Adicionar Cliente no Sistema</button>
             </form>
 
-            <h3 style="margin-top: 30px; color: var(--cor-laranja);">Clientes Cadastrados</h3>
-            <ul id="lista-clientes" class="lista-custom"></ul>
-        </section>
+            <h2 style="margin-top: 40px;">Clientes Registrados na Nuvem</h2>
+            <ul class="lista-custom" id="lista-clientes"></ul>
+        </div>
 
-        <section id="aba-relatorios" class="tab-content">
-            <h2>Relação Mensal e Fechamento</h2>
-            
+        <div class="tab-content" id="aba-relatorios">
+            <h2>Filtrar Serviços Ativos por Empresa</h2>
             <div class="form-group">
-                <label for="filtro-cliente">Filtrar por Cliente para Fechamento:</label>
                 <select id="filtro-cliente">
                     <option value="todos">Todos os Clientes (Geral)</option>
                 </select>
@@ -123,7 +127,7 @@
             </div>
 
             <div class="total-container">
-                <span>Total Filtrado: <strong id="valor-total-mensal">R$ 0,00</strong></span>
+                Total Acumulado Aberto: <strong id="valor-total-mensal">R$ 0.00</strong>
             </div>
 
             <div class="action-buttons">
@@ -151,8 +155,8 @@
                     <tbody id="tabela-historico"></tbody>
                 </table>
             </div>
-        </section>
+        </div>
+    </div>
 
-    </main>
 </body>
 </html>

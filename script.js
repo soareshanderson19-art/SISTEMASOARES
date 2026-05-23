@@ -400,7 +400,10 @@ function gerenciarPDF(acao) {
         return;
     }
     
-    const nomeMes = obtenerNomeMes(entregasFiltradas[0].data);
+    // AGORA PEGA O MÊS SELECIONADO MANUALMENTE PELO USUÁRIO
+    const campoMes = document.getElementById('selecao-mes-fechamento');
+    const nomeMes = campoMes ? campoMes.value : "MÊS";
+    
     const nomeClienteTitulo = filtroCliente === 'todos' ? "GERAL" : filtroCliente.toUpperCase();
     const identificadorFechamento = `FECHAMENTO ${nomeClienteTitulo} MÊS DE ${nomeMes}`;
 
@@ -440,7 +443,6 @@ function gerenciarPDF(acao) {
         }
     }
 }
-
 function atualizarHistoricoFechados() {
     const tabela = document.getElementById('tabela-historico');
     if(!tabela) return;

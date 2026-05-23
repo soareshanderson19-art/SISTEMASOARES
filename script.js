@@ -273,7 +273,6 @@ function removerEntrega(fbKey) {
     }
 }
 
-// CORREÇÃO AQUI: Nome alterado para "executarTrocaAba" com X para bater com a chamada externa
 function configurarCliqueAbas() {
     const abasConfig = [
         { botaoId: 'btn-aba-lancamentos', conteudoId: 'aba-lancamentos' },
@@ -291,7 +290,7 @@ function configurarCliqueAbas() {
     });
 }
 
-function executarTrocaAba(tabId, botaoAtivo) {
+function ejecutarTrocaAba(tabId, botaoAtivo) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     
@@ -482,6 +481,55 @@ function construirDocumentoPDF(tituloFechamento, nomeMes, listaServicos) {
     return doc;
 }
 
+// NOVA FUNÇÃO AUXILIAR: Salva o PDF fisicamente e abre de forma nativa no Android
+function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
+    if (!window.cordova || !window.resolveLocalFileSystemURL) {
+        alert("Erro: Funções nativas do dispositivo não encontradas.");
+        return;
+    }
+
+    // Pega o binário bruto do PDF (ArrayBuffer)
+    const pdfOutput = jsPdfDoc.output('arraybuffer');
+    
+    // Define a pasta temporária ideal (Cache do App) onde o Android permite ler/escrever livremente
+    const pastaAlvo = cordova.file.cacheDirectory;
+
+    window.resolveLocalFileSystemURL(pastaAlvo, function (dirEntry) {
+        dirEntry.getFile(nomeArquivo, { create: true, exclusive: false }, function (fileEntry) {
+            fileEntry.createWriter(function (fileWriter) {
+                
+                fileWriter.onwriteend = function () {
+                    console.log("PDF SALVO COM SUCESSO: " + fileEntry.toURL());
+                    
+                    // Usa o File Opener para abrir nativamente no leitor do celular
+                    cordova.plugins.fileOpener2.open(
+                        fileEntry.toURL(),
+                        'application/pdf',
+                        {
+                            error: function (e) {
+                                console.error('Erro ao abrir o PDF: ', e);
+                                alert('Não foi possível abrir o PDF. Instale um leitor de PDF no celular (Ex: Google PDF ou Adobe Reader).');
+                            },
+                            success: function () {
+                                console.log('PDF aberto na tela do celular com sucesso.');
+                            }
+                        }
+                    );
+                };
+
+                fileWriter.onerror = function (e) {
+                    console.error("Erro ao escrever arquivo binário: " + e.toString());
+                    alert("Erro ao gravar o PDF no armazenamento interno.");
+                };
+
+                // Escreve o binário no arquivo criado
+                fileWriter.write(new Blob([pdfOutput], { type: 'application/pdf' }));
+                
+            }, function(err) { alert("Erro no escritor de arquivo: " + JSON.stringify(err)); });
+        }, function(err) { alert("Erro ao mapear arquivo: " + JSON.stringify(err)); });
+    }, function(err) { alert("Erro ao acessar diretório nativo: " + JSON.stringify(err)); });
+}
+
 function gerenciarPDF(acao) {
     const filtroCliente = document.getElementById('filtro-cliente').value;
     const entregasFiltradas = filtroCliente === 'todos' ? entregas : entregas.filter(e => e.cliente === filtroCliente);
@@ -500,16 +548,18 @@ function gerenciarPDF(acao) {
 
     if (acao === 'visualizar') {
         if (window.cordova) {
-            // TRANSFORMA O PDF EM LINK E ABRE NO NAVEGADOR DO CELULAR (ONDE O ANDROID PERMITE)
-            const pdfBase64 = doc.output('datauristring');
-            window.open(pdfBase64, '_system');
+            // USANDO A NOVA ABORDAGEM NATIVA DE ARQUIVO
+            abrirPdfNoCelular(doc, nomeArquivoSalvar);
         } else {
-            // No computador continua abrindo na aba normal
+            // Computador continua em aba normal
             window.open(doc.output('bloburl'), '_blank');
         }
     }
     else if (acao === 'enviar') {
-        doc.save(nomeArquivoSalvar);
+        // No computador faz o download automático
+        if (!window.cordova) {
+            doc.save(nomeArquivoSalvar);
+        }
         let totalAcumulado = entregasFiltradas.reduce((acc, current) => acc + current.valor, 0);
         let mensagemWhats = encodeURIComponent(`Olá, segue o relatório de serviços prestados: *${identificadorFechamento}* no valor total de *R$ ${totalAcumulado.toFixed(2)}*.`);
         window.open(`https://api.whatsapp.com/send?text=${mensagemWhats}`, '_blank');
@@ -519,7 +569,12 @@ function gerenciarPDF(acao) {
             return;
         }
         
-        doc.save(nomeArquivoSalvar);
+        // Se for no computador faz o download, no celular apenas salva local ou deixa abrir
+        if (!window.cordova) {
+            doc.save(nomeArquivoSalvar);
+        } else {
+            abrirPdfNoCelular(doc, nomeArquivoSalvar);
+        }
         
         const novoFechamento = {
             id: `${identificadorFechamento} (Fechado em ${new Date().toLocaleDateString('pt-BR')})`,
@@ -573,11 +628,11 @@ function gerarPdfHistorico(index) {
     }
     const mesRef = itemHist.mesRef || "MÊS";
     const doc = construirDocumentoPDF(itemHist.id, mesRef, itemHist.dados);
+    const nomeArquivoSalvar = itemHist.id.replace(/\s+/g, '_') + '.pdf';
 
     if (window.cordova) {
-        // Abre o histórico de forma segura no celular
-        const pdfBase64 = doc.output('datauristring');
-        window.open(pdfBase64, '_system');
+        // Abre o histórico de forma nativa e segura no celular
+        abrirPdfNoCelular(doc, nomeArquivoSalvar);
     } else {
         // Abre na aba no PC
         window.open(doc.output('bloburl'), '_blank');

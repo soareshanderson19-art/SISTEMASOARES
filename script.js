@@ -135,15 +135,16 @@ function configurarFormularioEntrega() {
         }
 
         const novaEntrega = {
-            id: Date.now(),
-            cliente: selectCliente.value,
-            data: document.getElementById('date-input').value,
-            coleta: document.getElementById('end-coleta').value,
-            entrega: document.getElementById('end-entrega').value,
-            retorno: document.querySelector('input[name="retorno"]:checked').value,
-            espera: document.getElementById('espera').value,
-            valor: parseFloat(document.getElementById('valor').value)
-        };
+    id: Date.now(),
+    cliente: selectCliente.value,
+    data: document.getElementById('date-input').value,
+    coleta: document.getElementById('end-coleta').value,
+    entrega: document.getElementById('end-entrega').value,
+    retorno: document.querySelector('input[name="retorno"]:checked').value,
+    express: document.querySelector('input[name="express"]:checked').value, // PEGA SE É EXPRESS
+    espera: document.getElementById('espera').value,
+    valor: parseFloat(document.getElementById('valor').value)
+};
         
         if (database) {
             database.ref('entregas').push(novaEntrega).then(() => {

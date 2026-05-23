@@ -458,7 +458,6 @@ function atualizarHistoricoFechados() {
         tr.innerHTML = `
             <td><strong>${hist.id}</strong></td>
             <td style="display: flex; gap: 8px; justify-content: flex-start; align-items: center;">
-                <button class="btn-acao-tabela" style="background: #1a53ff; color: white;" onclick="gerarPdfHistorico(${index})">👁️ Ver PDF</button>
                 <button class="btn-acao-tabela btn-vizualizar" onclick="restaurarMes(${index})">🔄 Restaurar</button>
                 <button class="btn-acao-tabela btn-deletar" onclick="excluirHistorico(${index})">🗑️ Apagar</button>
             </td>

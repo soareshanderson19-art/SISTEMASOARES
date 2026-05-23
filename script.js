@@ -361,39 +361,29 @@ function construirDocumentoPDF(tituloFechamento, nomeMes, listaServicos) {
 
 // INJEÇÃO AMBIENTE NATIVO MOBILE (ÚNICA E CORRIGIDA)
 function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
-    if (!window.cordova || !window.resolveLocalFileSystemURL) {
-        alert("Erro: Plugins móveis ausentes ou corrompidos.");
+    if (!window.cordova) {
+        alert("Erro: Ambiente mobile não detectado.");
         return;
     }
 
-    const pdfOutput = jsPdfDoc.output('arraybuffer');
-    const pastaAlvo = cordova.file.cacheDirectory;
+    // Transforma o PDF em Base64 (formato de texto seguro para transporte)
+    const pdfBase64 = jsPdfDoc.output('datauristring').split(',')[1];
+    
+    // Define os dados do arquivo para o compartilhamento nativo
+    const dadosArquivo = {
+        files: ['data:application/pdf;base64,' + pdfBase64],
+        fileName: nomeArquivo
+    };
 
-    window.resolveLocalFileSystemURL(pastaAlvo, function (dirEntry) {
-        dirEntry.getFile(nomeArquivo, { create: true, exclusive: false }, function (fileEntry) {
-            fileEntry.createWriter(function (fileWriter) {
-                fileWriter.onwriteend = function () {
-                    cordova.plugins.fileOpener2.open(
-                        fileEntry.toURL(),
-                        'application/pdf',
-                        {
-                            error: function (e) {
-                                console.error('Erro detalhado do FileOpener:', e);
-                                alert('Não foi possível abrir o PDF diretamente. Verifique se possui o Google Drive PDF ou Adobe Reader instalado.');
-                            },
-                            success: function () { 
-                                console.log('NATIVO: PDF aberto com sucesso na tela.'); 
-                            }
-                        }
-                    );
-                };
-                fileWriter.onerror = function (e) { 
-                    alert("Falha ao gravar o PDF no cache temporário."); 
-                };
-                fileWriter.write(new Blob([pdfOutput], { type: 'application/pdf' }));
-            }, function(err) { alert("Erro ao criar fluxo de escrita: " + JSON.stringify(err)); });
-        }, function(err) { alert("Erro de mapeamento: " + JSON.stringify(err)); });
-    }, function(err) { alert("Erro de acesso ao diretório: " + JSON.stringify(err)); });
+    // Abre a janela nativa do celular para enviar o PDF para o WhatsApp ou salvar no Drive
+    window.plugins.socialsharing.shareWithOptions(dadosArquivo, 
+        function(result) {
+            console.log("Compartilhado com sucesso!");
+        }, 
+        function(err) {
+            alert("Erro ao compartilhar o PDF: " + err);
+        }
+    );
 }
 
 function gerenciarPDF(acao) {

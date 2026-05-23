@@ -290,7 +290,7 @@ function configurarCliqueAbas() {
     });
 }
 
-function ejecutarTrocaAba(tabId, botaoAtivo) {
+function executarTrocaAba(tabId, botaoAtivo) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     
@@ -481,17 +481,17 @@ function construirDocumentoPDF(tituloFechamento, nomeMes, listaServicos) {
     return doc;
 }
 
-// NOVA FUNÇÃO AUXILIAR: Salva o PDF fisicamente e abre de forma nativa no Android
+// SOLUÇÃO EXCLUSIVA PARA DISPOSITIVOS MOBILE CORDOVA
 function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
     if (!window.cordova || !window.resolveLocalFileSystemURL) {
-        alert("Erro: Funções nativas do dispositivo não encontradas.");
+        alert("Erro: Ambientes e plugins móveis não encontrados.");
         return;
     }
 
-    // Pega o binário bruto do PDF (ArrayBuffer)
+    // Extrai o binário real não-corrompido do PDF
     const pdfOutput = jsPdfDoc.output('arraybuffer');
     
-    // Define a pasta temporária ideal (Cache do App) onde o Android permite ler/escrever livremente
+    // Pasta interna do cache do Aplicativo (Evita problemas de restrição do Android 11+)
     const pastaAlvo = cordova.file.cacheDirectory;
 
     window.resolveLocalFileSystemURL(pastaAlvo, function (dirEntry) {
@@ -499,35 +499,35 @@ function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
             fileEntry.createWriter(function (fileWriter) {
                 
                 fileWriter.onwriteend = function () {
-                    console.log("PDF SALVO COM SUCESSO: " + fileEntry.toURL());
+                    console.log("MÓVEL: PDF persistido com sucesso: " + fileEntry.toURL());
                     
-                    // Usa o File Opener para abrir nativamente no leitor do celular
+                    // Dispara a Intent nativa do Android para carregar o visualizador padrão
                     cordova.plugins.fileOpener2.open(
                         fileEntry.toURL(),
                         'application/pdf',
                         {
                             error: function (e) {
-                                console.error('Erro ao abrir o PDF: ', e);
-                                alert('Não foi possível abrir o PDF. Instale um leitor de PDF no celular (Ex: Google PDF ou Adobe Reader).');
+                                console.error('Erro ao abrir arquivo: ', e);
+                                alert('Não foi possível exibir o PDF. Certifique-se de que possui um leitor instalado (Ex: Google Drive PDF, Adobe).');
                             },
                             success: function () {
-                                console.log('PDF aberto na tela do celular com sucesso.');
+                                console.log('MÓVEL: Visualizador disparado com sucesso.');
                             }
                         }
                     );
                 };
 
                 fileWriter.onerror = function (e) {
-                    console.error("Erro ao escrever arquivo binário: " + e.toString());
-                    alert("Erro ao gravar o PDF no armazenamento interno.");
+                    console.error("Falha no buffer do arquivo: " + e.toString());
+                    alert("Ocorreu um erro ao gravar o arquivo de fechamento.");
                 };
 
-                // Escreve o binário no arquivo criado
+                // Escreve os dados como blob binário puro
                 fileWriter.write(new Blob([pdfOutput], { type: 'application/pdf' }));
                 
-            }, function(err) { alert("Erro no escritor de arquivo: " + JSON.stringify(err)); });
-        }, function(err) { alert("Erro ao mapear arquivo: " + JSON.stringify(err)); });
-    }, function(err) { alert("Erro ao acessar diretório nativo: " + JSON.stringify(err)); });
+            }, function(err) { alert("Erro de gravação: " + JSON.stringify(err)); });
+        }, function(err) { alert("Erro de sistema de arquivos: " + JSON.stringify(err)); });
+    }, function(err) { alert("Erro de diretório nativo: " + JSON.stringify(err)); });
 }
 
 function gerenciarPDF(acao) {
@@ -548,15 +548,13 @@ function gerenciarPDF(acao) {
 
     if (acao === 'visualizar') {
         if (window.cordova) {
-            // USANDO A NOVA ABORDAGEM NATIVA DE ARQUIVO
             abrirPdfNoCelular(doc, nomeArquivoSalvar);
         } else {
-            // Computador continua em aba normal
+            // No computador/navegador abre em uma nova guia normalmente
             window.open(doc.output('bloburl'), '_blank');
         }
     }
     else if (acao === 'enviar') {
-        // No computador faz o download automático
         if (!window.cordova) {
             doc.save(nomeArquivoSalvar);
         }
@@ -569,7 +567,6 @@ function gerenciarPDF(acao) {
             return;
         }
         
-        // Se for no computador faz o download, no celular apenas salva local ou deixa abrir
         if (!window.cordova) {
             doc.save(nomeArquivoSalvar);
         } else {
@@ -631,10 +628,8 @@ function gerarPdfHistorico(index) {
     const nomeArquivoSalvar = itemHist.id.replace(/\s+/g, '_') + '.pdf';
 
     if (window.cordova) {
-        // Abre o histórico de forma nativa e segura no celular
         abrirPdfNoCelular(doc, nomeArquivoSalvar);
     } else {
-        // Abre na aba no PC
         window.open(doc.output('bloburl'), '_blank');
     }
 }

@@ -359,47 +359,7 @@ function construirDocumentoPDF(tituloFechamento, nomeMes, listaServicos) {
     return doc;
 }
 
-// INJEÇÃO AMBIENTE NATIVO MOBILE
-function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
-    if (!window.cordova || !window.resolveLocalFileSystemURL) {
-        alert("Erro: Plugins móveis ausentes ou corrompidos.");
-        return;
-    }
-
-    const pdfOutput = jsPdfDoc.output('arraybuffer');
-    
-    // Usar o diretório externo de dados resolve o bloqueio de segurança do Android
-    const pastaAlvo = cordova.file.externalDataDirectory || cordova.file.cacheDirectory;
-
-    window.resolveLocalFileSystemURL(pastaAlvo, function (dirEntry) {
-        dirEntry.getFile(nomeArquivo, { create: true, exclusive: false }, function (fileEntry) {
-            fileEntry.createWriter(function (fileWriter) {
-                fileWriter.onwriteend = function () {
-                    // Executa a abertura com o tipo MIME correto e tratamento detalhado de erro
-                    cordova.plugins.fileOpener2.open(
-                        fileEntry.toURL(),
-                        'application/pdf',
-                        {
-                            error: function (e) {
-                                console.error('Erro detalhado do FileOpener:', e);
-                                alert('Não foi possível abrir o PDF diretamente. Verifique se o Google Drive PDF, Adobe Reader ou similar está definido como padrão.');
-                            },
-                            success: function () { 
-                                console.log('NATIVO: PDF aberto com sucesso na tela.'); 
-                            }
-                        }
-                    );
-                };
-                fileWriter.onerror = function (e) { 
-                    alert("Falha ao escrever dados do PDF no armazenamento temporário."); 
-                };
-                fileWriter.write(new Blob([pdfOutput], { type: 'application/pdf' }));
-            }, function(err) { alert("Erro ao criar fluxo de escrita: " + JSON.stringify(err)); });
-        }, function(err) { alert("Erro ao mapear arquivo físico: " + JSON.stringify(err)); });
-    }, function(err) { alert("Erro ao acessar diretório do celular: " + JSON.stringify(err)); });
-}
-
-// Função auxiliar interna para processar o download nativo no celular
+// INJEÇÃO AMBIENTE NATIVO MOBILE (ÚNICA E CORRIGIDA)
 function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
     if (!window.cordova || !window.resolveLocalFileSystemURL) {
         alert("Erro: Plugins móveis ausentes ou corrompidos.");
@@ -418,17 +378,22 @@ function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
                         'application/pdf',
                         {
                             error: function (e) {
-                                alert('Instale um leitor de PDF (Ex: Google Drive PDF ou Adobe Reader) para visualizar o fechamento.');
+                                console.error('Erro detalhado do FileOpener:', e);
+                                alert('Não foi possível abrir o PDF diretamente. Verifique se possui o Google Drive PDF ou Adobe Reader instalado.');
                             },
-                            success: function () { console.log('NATIVO: PDF aberto com sucesso.'); }
+                            success: function () { 
+                                console.log('NATIVO: PDF aberto com sucesso na tela.'); 
+                            }
                         }
                     );
                 };
-                fileWriter.onerror = function (e) { alert("Falha ao processar o armazenamento de dados temporários."); };
+                fileWriter.onerror = function (e) { 
+                    alert("Falha ao gravar o PDF no cache temporário."); 
+                };
                 fileWriter.write(new Blob([pdfOutput], { type: 'application/pdf' }));
-            }, function(err) { alert("Erro de fluxo: " + JSON.stringify(err)); });
-        }, function(err) { alert("Erro de arquivo: " + JSON.stringify(err)); });
-    }, function(err) { alert("Erro de diretório: " + JSON.stringify(err)); });
+            }, function(err) { alert("Erro ao criar fluxo de escrita: " + JSON.stringify(err)); });
+        }, function(err) { alert("Erro de mapeamento: " + JSON.stringify(err)); });
+    }, function(err) { alert("Erro de acesso ao diretório: " + JSON.stringify(err)); });
 }
 
 function gerenciarPDF(acao) {
@@ -515,7 +480,7 @@ function gerarPdfHistorico(index) {
     if (window.cordova) abrirPdfNoCelular(doc, nomeArquivoSalvar);
     else window.open(doc.output('bloburl'), '_blank');
 }
-window.gerarPdfHistorico = gerarPdfHistorico;
+window.getarPdfHistorico = gerarPdfHistorico;
 
 function restaurarMes(index) {
     if(confirm("Deseja reabrir este mês fechado? Os dados voltarão para a edição.") && database) {

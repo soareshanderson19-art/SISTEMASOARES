@@ -1,0 +1,6 @@
+{
+  "appId": "com.soaresexpress.app",
+  "appName": "Soares Express",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}

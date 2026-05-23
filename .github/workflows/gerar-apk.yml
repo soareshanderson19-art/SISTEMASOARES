@@ -1,4 +1,4 @@
-name: Gerar APK Automático
+name: Gerar APK Automático (Capacitor)
 
 on:
   push:
@@ -19,46 +19,40 @@ jobs:
         with:
           node-version: 18
 
-      - name: Configurar o Java (Necessário para Android)
+      - name: Configurar o Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Instalar o Cordova
-        run: npm install -g cordova
+      - name: Instalar Dependências e Capacitor
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli
+          npm install @capacitor/filesystem @capacitor-community/file-opener
 
-      - name: Criar Projeto Android
+      - name: Preparar Estrutura de Build Web
         run: |
-          # 1. Cria a base limpa do Cordova
-          cordova create meu-app com.soaresexpress.app "Soares Express"
-          
-          # 2. Apaga arquivos de template padrão
-          rm -rf meu-app/www/*
-          
-          # 3. Copia estritamente os arquivos web criados para a pasta www
-          cp index.html meu-app/www/ 2>/dev/null || true
-          cp script.js meu-app/www/ 2>/dev/null || true
-          cp style.css meu-app/www/ 2>/dev/null || true
-          cp manifest.json meu-app/www/ 2>/dev/null || true
-          cp service-worker.js meu-app/www/ 2>/dev/null || true
-          
-          # 4. Move as configurações e imagens estruturais
-          cp config.xml meu-app/config.xml 2>/dev/null || true
-          cp logo.png meu-app/logo.png 2>/dev/null || true
-          
-          cd meu-app
-          
-          # 5. Adiciona plataforma Android de compilação (os plugins sobem via config.xml)
-          cordova platform add android
-          
-      - name: Compilar o APK de Teste (Debug)
+          mkdir -p www
+          cp index.html www/ 2>/dev/null || true
+          cp script.js www/ 2>/dev/null || true
+          cp style.css www/ 2>/dev/null || true
+          cp manifest.json www/ 2>/dev/null || true
+          cp service-worker.js www/ 2>/dev/null || true
+          cp logo.png www/ 2>/dev/null || true
+
+      - name: Inicializar Projeto Android com Capacitor
         run: |
-          cd meu-app
-          cordova build android --debug
+          npx cap sync
+          npx cap add android
+
+      - name: Compilar o APK Nativo do Android
+        run: |
+          cd android
+          ./gradlew assembleDebug
 
       - name: Salvar o APK gerado como resultado
         uses: actions/upload-artifact@v4
         with:
           name: meu-aplicativo-apk
-          path: meu-app/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

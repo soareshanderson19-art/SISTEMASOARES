@@ -30,32 +30,31 @@ jobs:
 
       - name: Criar Projeto Android
         run: |
-          # 1. Cria a pasta temporária do app
+          # 1. Cria a estrutura do app nativo
           cordova create meu-app com.soaresexpress.app "Soares Express"
           
-          # 2. Limpa o conteúdo padrão da pasta www do Cordova para evitar lixo
+          # 2. Limpa arquivos padrões do template
           rm -rf meu-app/www/*
           
-          # 3. Copia apenas os arquivos do front-end da raiz para a pasta www de forma limpa
+          # 3. Copia estritamente os arquivos web do seu repositório
           cp index.html meu-app/www/ 2>/dev/null || true
           cp script.js meu-app/www/ 2>/dev/null || true
           cp style.css meu-app/www/ 2>/dev/null || true
           cp manifest.json meu-app/www/ 2>/dev/null || true
           cp service-worker.js meu-app/www/ 2>/dev/null || true
           
-          # 4. Copia os arquivos de configuração estruturais do app
+          # 4. Copia os arquivos estruturais e de marca
           cp config.xml meu-app/config.xml 2>/dev/null || true
           cp logo.png meu-app/logo.png 2>/dev/null || true
           
-          # 5. Entra na pasta do app para gerenciar os componentes nativos
           cd meu-app
           
-          # 6. ADICIONA OS PLUGINS OBRIGATÓRIOS PARA FAZER O PDF FUNCIONAR NO CELULAR
+          # 5. Instala os componentes nativos de visualização de arquivos
           cordova plugin add cordova-plugin-inappbrowser
           cordova plugin add cordova-plugin-file
           cordova plugin add cordova-plugin-file-opener2
           
-          # 7. Adiciona a plataforma Android
+          # 6. Prepara a plataforma de build do Android
           cordova platform add android
           
       - name: Compilar o APK de Teste (Debug)

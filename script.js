@@ -200,38 +200,32 @@ function atualizarDropdowns() {
     if(clientes.some(c => c.nome === valFiltroAnterior) || valFiltroAnterior === 'todos') filtroCliente.value = valFiltroAnterior;
 }
 
-function atualizarTabelaEntregas() {
-    const corpo = document.getElementById('tabela-corpo');
-    const filtroSelect = document.getElementById('filtro-cliente');
-    if(!corpo || !filtroSelect) return;
+function atualizarTabela(entregasParaExibir) {
+    const tabelaCorpo = document.getElementById('tabela-corpo');
+    if (!tabelaCorpo) return;
+    tabelaCorpo.innerHTML = '';
 
-    const filtro = filtroSelect.value;
-    corpo.innerHTML = '';
-    let total = 0;
-    const listagem = filtro === 'todos' ? entregas : entregas.filter(e => e.cliente === filtro);
-    listagem.sort((a,b) => new Date(a.data) - new Date(b.data));
+    entregasParaExibir.forEach((entrega, index) => {
+        const tr = document.createElement('tr');
+        
+        // Formatando a data de YYYY-MM-DD para DD/MM/YYYY
+        const dataFormatada = entrega.data.split('-').reverse().join('/');
 
-    listagem.forEach(ent => {
-        total += ent.valor;
-        let esperaTela = ent.espera;
-        if(esperaTela !== "Sem Espera") {
-            esperaTela = ent.espera === "1" ? "1 Espera" : `${ent.espera} Esperas`;
-        }
-
-        let tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${ent.data.split('-').reverse().join('/')}</td>
-            <td><strong>${ent.cliente}</strong></td>
-            <td>${ent.coleta}</td>
-            <td>${ent.entrega}</td>
-            <td>${ent.retorno}</td>
-            <td>${esperaTela}</td>
-            <td>R$ ${ent.valor.toFixed(2)}</td>
-            <td><button class="btn-acao-tabela btn-deletar" onclick="removerEntrega('${ent.fbKey}')">Excluir</button></td>
+            <td>${dataFormatada}</td>
+            <td>${entrega.cliente.toUpperCase()}</td>
+            <td>${entrega.coleta}</td>
+            <td>${entrega.entrega}</td>
+            <td><span class="badge-${entrega.retorno === 'Sim' ? 'sim' : 'nao'}">${entrega.retorno}</span></td>
+            <td><span class="badge-${entrega.express === 'Sim' ? 'express' : 'nao'}">${entrega.express || 'Não'}</span></td>
+            <td>${entrega.espera}</td>
+            <td><strong>R$ ${parseFloat(entrega.valor).toFixed(2)}</strong></td>
+            <td>
+                <button class="btn-deletar-entrega" onclick="deletarEntrega('${entrega.fbKey || index}')">🗑️</button>
+            </td>
         `;
-        corpo.appendChild(tr);
+        tabelaCorpo.appendChild(tr);
     });
-    document.getElementById('valor-total-mensal').textContent = `R$ ${total.toFixed(2)}`;
 }
 
 function removerEntrega(fbKey) {

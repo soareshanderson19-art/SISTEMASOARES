@@ -25,35 +25,31 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Instalar o Cordova (Transformador Web para App)
+      - name: Instalar o Cordova
         run: npm install -g cordova
 
       - name: Criar Projeto Android
         run: |
-          # Cria a estrutura base limpa do Cordova
+          # 1. Cria a base limpa do Cordova
           cordova create meu-app com.soaresexpress.app "Soares Express"
           
-          # Limpa os arquivos de exemplo que vêm por padrão
+          # 2. Apaga arquivos de template padrão
           rm -rf meu-app/www/*
           
-          # Copia estritamente os arquivos fundamentais do seu sistema
+          # 3. Copia estritamente os arquivos web criados para a pasta www
           cp index.html meu-app/www/ 2>/dev/null || true
           cp script.js meu-app/www/ 2>/dev/null || true
           cp style.css meu-app/www/ 2>/dev/null || true
           cp manifest.json meu-app/www/ 2>/dev/null || true
           cp service-worker.js meu-app/www/ 2>/dev/null || true
           
-          # Move as configurações globais e ícones
+          # 4. Move as configurações e imagens estruturais
           cp config.xml meu-app/config.xml 2>/dev/null || true
           cp logo.png meu-app/logo.png 2>/dev/null || true
           
           cd meu-app
           
-          # Adiciona os plugins para o Android conseguir ler/salvar os arquivos de PDF locais
-          cordova plugin add cordova-plugin-inappbrowser
-          cordova plugin add cordova-plugin-file
-          cordova plugin add cordova-plugin-file-opener2
-          
+          # 5. Adiciona plataforma Android de compilação (os plugins sobem via config.xml)
           cordova platform add android
           
       - name: Compilar o APK de Teste (Debug)

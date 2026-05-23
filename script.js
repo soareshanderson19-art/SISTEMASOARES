@@ -300,7 +300,7 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
     doc.setFontSize(9);
     doc.setTextColor(200, 200, 200);
     doc.text("Logística Integrada & Prestação de Serviços Urbanos", 14, 24);
-    doc.text("Contato: financeiro@soaresexpress.com", 14, 29);
+    doc.text("Contato: soaresxpress2018@gmail.com", 14, 29);
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");

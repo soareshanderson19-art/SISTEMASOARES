@@ -135,16 +135,16 @@ function configurarFormularioEntrega() {
         }
 
         const novaEntrega = {
-    id: Date.now(),
-    cliente: selectCliente.value,
-    data: document.getElementById('date-input').value,
-    coleta: document.getElementById('end-coleta').value,
-    entrega: document.getElementById('end-entrega').value,
-    retorno: document.querySelector('input[name="retorno"]:checked').value,
-    express: document.querySelector('input[name="express"]:checked').value, // PEGA SE É EXPRESS
-    espera: document.getElementById('espera').value,
-    valor: parseFloat(document.getElementById('valor').value)
-};
+            id: Date.now(),
+            cliente: selectCliente.value,
+            data: document.getElementById('date-input').value,
+            coleta: document.getElementById('end-coleta').value,
+            entrega: document.getElementById('end-entrega').value,
+            retorno: document.querySelector('input[name="retorno"]:checked').value,
+            express: document.querySelector('input[name="express"]:checked').value, // ADICIONADO EXPRESS AQUI
+            espera: document.getElementById('espera').value,
+            valor: parseFloat(document.getElementById('valor').value)
+        };
         
         if (database) {
             database.ref('entregas').push(novaEntrega).then(() => {
@@ -200,32 +200,40 @@ function atualizarDropdowns() {
     if(clientes.some(c => c.nome === valFiltroAnterior) || valFiltroAnterior === 'todos') filtroCliente.value = valFiltroAnterior;
 }
 
-function atualizarTabela(entregasParaExibir) {
-    const tabelaCorpo = document.getElementById('tabela-corpo');
-    if (!tabelaCorpo) return;
-    tabelaCorpo.innerHTML = '';
+// CORRIGIDO O NOME DA FUNÇÃO DE ATUALIZAR TABELA NA TELA E ADICIONADO A COLUNA EXPRESS
+function atualizarTabelaEntregas() {
+    const corpo = document.getElementById('tabela-corpo');
+    const filtroSelect = document.getElementById('filtro-cliente');
+    if(!corpo || !filtroSelect) return;
 
-    entregasParaExibir.forEach((entrega, index) => {
-        const tr = document.createElement('tr');
-        
-        // Formatando a data de YYYY-MM-DD para DD/MM/YYYY
-        const dataFormatada = entrega.data.split('-').reverse().join('/');
+    const filtro = filtroSelect.value;
+    corpo.innerHTML = '';
+    let total = 0;
+    const listagem = filtro === 'todos' ? entregas : entregas.filter(e => e.cliente === filtro);
+    listagem.sort((a,b) => new Date(a.data) - new Date(b.data));
 
+    listagem.forEach(ent => {
+        total += ent.valor;
+        let esperaTela = ent.espera;
+        if(esperaTela !== "Sem Espera") {
+            esperaTela = ent.espera === "1" ? "1 Espera" : `${ent.espera} Esperas`;
+        }
+
+        let tr = document.createElement('tr');
         tr.innerHTML = `
-            <td>${dataFormatada}</td>
-            <td>${entrega.cliente.toUpperCase()}</td>
-            <td>${entrega.coleta}</td>
-            <td>${entrega.entrega}</td>
-            <td><span class="badge-${entrega.retorno === 'Sim' ? 'sim' : 'nao'}">${entrega.retorno}</span></td>
-            <td><span class="badge-${entrega.express === 'Sim' ? 'express' : 'nao'}">${entrega.express || 'Não'}</span></td>
-            <td>${entrega.espera}</td>
-            <td><strong>R$ ${parseFloat(entrega.valor).toFixed(2)}</strong></td>
-            <td>
-                <button class="btn-deletar-entrega" onclick="deletarEntrega('${entrega.fbKey || index}')">🗑️</button>
-            </td>
+            <td>${ent.data.split('-').reverse().join('/')}</td>
+            <td><strong>${ent.cliente}</strong></td>
+            <td>${ent.coleta}</td>
+            <td>${ent.entrega}</td>
+            <td>${ent.retorno}</td>
+            <td><strong>${ent.express || 'Não'}</strong></td>
+            <td>${esperaTela}</td>
+            <td>R$ ${ent.valor.toFixed(2)}</td>
+            <td><button class="btn-acao-tabela btn-deletar" onclick="removerEntrega('${ent.fbKey}')">Excluir</button></td>
         `;
-        tabelaCorpo.appendChild(tr);
+        corpo.appendChild(tr);
     });
+    document.getElementById('valor-total-mensal').textContent = `R$ ${total.toFixed(2)}`;
 }
 
 function removerEntrega(fbKey) {
@@ -268,47 +276,33 @@ function switchTab(tabId) {
 }
 window.switchTab = switchTab;
 
-function obtenerNomeMes(dataString) {
-    if (!dataString) return "MÊS";
-    const partes = dataString.split('-');
-    const meses = ["JANEIRO", "FEVEREIRO", "MARÇO", "ABRIL", "MAIO", "JUNHO", "JULHO", "AGOSTO", "SETEMBRO", "OUTUBRO", "NOVEMBRO", "DEZEMBRO"];
-    return meses[parseInt(partes[1], 10) - 1] || "MÊS";
-}
-
+// NOVO MOTOR DE PDF ULTRA PROFISSIONAL E COMPLETO COM CAMPO EXPRESS
 function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
     const { jsPDF } = window.jspdf;
-    // Criando documento no formato A4, unidade em milímetros (mm)
     const doc = new jsPDF('p', 'mm', 'a4');
 
-    // --- CONFIGURAÇÃO DE CORES (PALETA CORPORATIVA) ---
-    const COR_PRIMARIA = [25, 25, 25];     // Cinza Escuro Executivo
-    const COR_ACENTO = [255, 102, 0];     // Laranja Soares Express
-    const COR_TEXTO = [60, 60, 60];       // Grafite para leitura confortável
-    const COR_LINHA_ALT = [245, 245, 247]; // Fundo cinza suave para linhas pares
+    const COR_PRIMARIA = [25, 25, 25];     
+    const COR_ACENTO = [255, 102, 0];     
+    const COR_TEXTO = [60, 60, 60];       
+    const COR_LINHA_ALT = [245, 245, 247]; 
 
-    // --- CABEÇALHO DO DOCUMENTO ---
-    // Faixa estilizada no topo
     doc.setFillColor(COR_PRIMARIA[0], COR_PRIMARIA[1], COR_PRIMARIA[2]);
     doc.rect(0, 0, 210, 38, 'F');
 
-    // Linha de detalhe em Laranja
     doc.setFillColor(COR_ACENTO[0], COR_ACENTO[1], COR_ACENTO[2]);
     doc.rect(0, 38, 210, 2, 'F');
 
-    // Nome da Empresa
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.text("SOARES EXPRESS", 14, 18);
 
-    // Subtítulo do Cabeçalho
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.setTextColor(200, 200, 200);
     doc.text("Logística Integrada & Prestação de Serviços Urbanos", 14, 24);
     doc.text("Contato: financeiro@soaresexpress.com", 14, 29);
 
-    // Metadados do Fechamento (Alinhado à Direita)
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.text(`MÊS DE REF: ${mesReferencia.toUpperCase()}`, 196, 18, { align: 'right' });
@@ -317,14 +311,11 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
     doc.text(`Emitido em: ${new Date().toLocaleDateString('pt-BR')}`, 196, 24, { align: 'right' });
     doc.text("Documento Oficial de Prestação de Contas", 196, 29, { align: 'right' });
 
-    // --- TÍTULO DO RELATÓRIO ---
     doc.setTextColor(COR_PRIMARIA[0], COR_PRIMARIA[1], COR_PRIMARIA[2]);
     doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
     doc.text(tituloFechamento.toUpperCase(), 14, 52);
 
-    // --- TABELA DE PRESTAÇÃO DE SERVIÇOS ---
-    // Definição das Colunas e Larguras Fixas (Totalizando 182mm para caber na página com margem)
     const colunas = [
         { label: "Data", width: 18 },
         { label: "Origem (Coleta)", width: 44 },
@@ -335,9 +326,8 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
         { label: "Valor (R$)", width: 24 }
     ];
 
-    let posY = 58; // Posição inicial da tabela
+    let posY = 58;
 
-    // Desenhando o Cabeçalho da Tabela
     doc.setFillColor(COR_PRIMARIA[0], COR_PRIMARIA[1], COR_PRIMARIA[2]);
     doc.rect(14, posY, 182, 7, 'F');
 
@@ -347,26 +337,22 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
 
     let posX = 14;
     colunas.forEach(col => {
-        // Alinha o texto do valor à direita, os demais à esquerda
         const alignOption = col.label === "Valor (R$)" ? { align: 'right' } : undefined;
         const textX = col.label === "Valor (R$)" ? posX + col.width - 2 : posX + 2;
         doc.text(col.label, textX, posY + 5, alignOption);
         posX += col.width;
     });
 
-    posY += 7; // Avança para a primeira linha de dados
+    posY += 7;
 
-    // Desenhando as Linhas de Dados
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     let totalGeral = 0;
 
     dadosEntregas.forEach((item, index) => {
-        // Controle de quebra de página caso o relatório seja muito longo
         if (posY > 270) {
             doc.addPage();
             posY = 20;
-            // Replica o cabeçalho da tabela na nova página
             doc.setFillColor(COR_PRIMARIA[0], COR_PRIMARIA[1], COR_PRIMARIA[2]);
             doc.rect(14, posY, 182, 7, 'F');
             doc.setTextColor(255, 255, 255);
@@ -382,13 +368,11 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
             doc.setFont("helvetica", "normal");
         }
 
-        // Fundo alternado (Efeito zebrado)
         if (index % 2 === 0) {
             doc.setFillColor(COR_LINHA_ALT[0], COR_LINHA_ALT[1], COR_LINHA_ALT[2]);
             doc.rect(14, posY, 182, 6.5, 'F');
         }
 
-        // Borda inferior bem fina para separar os registros
         doc.setDrawColor(230, 230, 230);
         doc.setLineWidth(0.1);
         doc.line(14, posY + 6.5, 196, posY + 6.5);
@@ -400,8 +384,7 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
         const valorNum = parseFloat(item.valor) || 0;
         totalGeral += valorNum;
 
-        // Limita o texto para não estourar a largura da célula caso o endereço seja gigante
-        const limitText = (txt, maxW) => doc.clipToConstraints ? txt : doc.splitTextToSize(txt, maxW - 3)[0] || txt;
+        const limitText = (txt, maxW) => doc.splitTextToSize(txt, maxW - 3)[0] || txt;
 
         doc.text(dataFormatada, pX + 2, posY + 4.5);
         pX += colunas[0].width;
@@ -413,17 +396,15 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
         pX += colunas[3].width;
         doc.text(item.express || "Não", pX + 2, posY + 4.5);
         pX += colunas[4].width;
-        doc.text(item.espera || "Sem Espera", pX + 2, posY + 4.5);
+        doc.text(item.espera === "Sem Espera" ? "-" : item.espera, pX + 2, posY + 4.5);
         pX += colunas[5].width;
         doc.text(valorNum.toFixed(2), pX + colunas[6].width - 2, posY + 4.5, { align: 'right' });
 
         posY += 6.5;
     });
 
-    // --- BLOCO DE FECHAMENTO FINANCEIRO ---
-    posY += 5; // Margemzinha de distanciamento da tabela
-    
-    // Caixa de resumo totalizador
+    posY += 5;
+    if (posY > 265) { doc.addPage(); posY = 20; }
     doc.setFillColor(COR_LINHA_ALT[0], COR_LINHA_ALT[1], COR_LINHA_ALT[2]);
     doc.setDrawColor(COR_PRIMARIA[0], COR_PRIMARIA[1], COR_PRIMARIA[2]);
     doc.setLineWidth(0.3);
@@ -439,25 +420,58 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
     doc.setFont("helvetica", "bold");
     doc.text(`R$ ${totalGeral.toFixed(2)}`, 192, posY + 9.5, { align: 'right' });
 
-    // --- ASSINATURAS / RODAPÉ ---
     posY += 28;
-    doc.setDrawColor(180, 180, 180);
-    doc.setLineWidth(0.2);
-    // Linha de assinatura da Soares Express
-    doc.line(14, posY, 80, posY);
-    // Linha de assinatura do Cliente contratante
-    doc.line(130, posY, 196, posY);
-
-    doc.setTextColor(120, 120, 120);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.text("Responsável Soares Express", 47, posY + 4, { align: 'center' });
-    doc.text("Assinatura do Cliente / Carimbo", 163, posY + 4, { align: 'center' });
+    if (posY < 285) {
+        doc.setDrawColor(180, 180, 180);
+        doc.setLineWidth(0.2);
+        doc.line(14, posY, 80, posY);
+        doc.line(130, posY, 196, posY);
+        doc.setTextColor(120, 120, 120);
+        doc.setFontSize(8);
+        doc.text("Responsável Soares Express", 47, posY + 4, { align: 'center' });
+        doc.text("Assinatura do Cliente / Carimbo", 163, posY + 4, { align: 'center' });
+    }
 
     return doc;
 }
+
+// ABERTURA NATIVA COM PLUGINS MODERNOS DO CAPACITOR
+async function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
+    if (!window.Capacitor) {
+        alert("Ambiente mobile não inicializado.");
+        return;
+    }
+
+    const pdfBase64 = jsPdfDoc.output('datauristring').split(',')[1];
+
+    try {
+        const resultadoGravacao = await window.Capacitor.Plugins.Filesystem.writeFile({
+            path: nomeArquivo,
+            data: pdfBase64,
+            directory: 'CACHE'
+        });
+
+        await window.Capacitor.Plugins.FileOpener.open({
+            filePath: resultadoGravacao.uri,
+            contentType: 'application/pdf'
+        });
+
+        console.log("CAPACITOR: PDF aberto perfeitamente na tela.");
+    } catch (erro) {
+        console.error("Erro interno do Capacitor:", erro);
+        alert("Não foi possível abrir o PDF diretamente. Verifique se possui o Google Drive PDF ou Adobe Reader instalado.");
+    }
+}
+
+function gerenciarPDF(acao) {
+    const filtroCliente = document.getElementById('filtro-cliente').value;
+    const entregasFiltradas = filtroCliente === 'todos' ? entregas : entregas.filter(e => e.cliente === filtroCliente);
+
+    if (entregasFiltradas.length === 0) {
+        alert("Não existem entregas lançadas neste período para este cliente.");
+        return;
+    }
     
-    // AGORA PEGA O MÊS SELECIONADO MANUALMENTE PELO USUÁRIO
     const campoMes = document.getElementById('selecao-mes-fechamento');
     const nomeMes = campoMes ? campoMes.value : "MÊS";
     
@@ -488,7 +502,7 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
         const novoFechamento = {
             id: `${identificadorFechamento} (Fechado em ${new Date().toLocaleDateString('pt-BR')})`,
             mesRef: nomeMes,
-            dados: entregasFiltradas.map(e => ({ data: e.data, cliente: e.cliente, coleta: e.coleta, entrega: e.entrega, retorno: e.retorno, espera: e.espera, valor: e.valor }))
+            dados: entregasFiltradas.map(e => ({ data: e.data, cliente: e.cliente, coleta: e.coleta, entrega: e.entrega, retorno: e.retorno, express: e.express || 'Não', espera: e.espera, valor: e.valor }))
         };
 
         if(database) {
@@ -500,6 +514,7 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
         }
     }
 }
+
 function atualizarHistoricoFechados() {
     const tabela = document.getElementById('tabela-historico');
     if(!tabela) return;
@@ -522,22 +537,6 @@ function atualizarHistoricoFechados() {
         tabela.appendChild(tr);
     });
 }
-
-function gerarPdfHistorico(index) {
-    const itemHist = historicoFechamentos[index];
-    if (!itemHist || !itemHist.dados || itemHist.dados.length === 0) {
-        alert("Erro ao recuperar os dados deste fechamento.");
-        return;
-    }
-    const doc = construirDocumentoPDF(itemHist.id, itemHist.mesRef || "MÊS", itemHist.dados);
-    const nomeArquivoSalvar = itemHist.id.replace(/\s+/g, '_') + '.pdf';
-
-    const isMobile = window.Capacitor && window.Capacitor.isNativePlatform();
-
-    if (isMobile) abrirPdfNoCelular(doc, nomeArquivoSalvar);
-    else window.open(doc.output('bloburl'), '_blank');
-}
-window.gerarPdfHistorico = gerarPdfHistorico;
 
 function restaurarMes(index) {
     if(confirm("Deseja reabrir este mês fechado? Os dados voltarão para a edição.") && database) {

@@ -359,31 +359,35 @@ function construirDocumentoPDF(tituloFechamento, nomeMes, listaServicos) {
     return doc;
 }
 
-// INJEÇÃO AMBIENTE NATIVO MOBILE (ÚNICA E CORRIGIDA)
-function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
-    if (!window.cordova) {
-        alert("Erro: Ambiente mobile não detectado.");
+// ABERTURA NATIVA COM PLUGINS MODERNOS DO CAPACITOR
+async function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
+    if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) {
+        alert("Ambiente mobile não inicializado ou plugins ausentes.");
         return;
     }
 
-    // Transforma o PDF em Base64 (formato de texto seguro para transporte)
+    // Transforma o PDF em String Base64 limpa
     const pdfBase64 = jsPdfDoc.output('datauristring').split(',')[1];
-    
-    // Define os dados do arquivo para o compartilhamento nativo
-    const dadosArquivo = {
-        files: ['data:application/pdf;base64,' + pdfBase64],
-        fileName: nomeArquivo
-    };
 
-    // Abre a janela nativa do celular para enviar o PDF para o WhatsApp ou salvar no Drive
-    window.plugins.socialsharing.shareWithOptions(dadosArquivo, 
-        function(result) {
-            console.log("Compartilhado com sucesso!");
-        }, 
-        function(err) {
-            alert("Erro ao compartilhar o PDF: " + err);
-        }
-    );
+    try {
+        // Grava o arquivo direto no diretório de cache privado do app (Livre de bloqueios do Android)
+        const resultadoGravacao = await window.Capacitor.Plugins.Filesystem.writeFile({
+            path: nomeArquivo,
+            data: pdfBase64,
+            directory: 'CACHE'
+        });
+
+        // Abre o leitor usando o FileOpener do Capacitor passando a URL interna segura do arquivo
+        await window.Capacitor.Plugins.FileOpener.open({
+            filePath: resultadoGravacao.uri,
+            contentType: 'application/pdf'
+        });
+
+        console.log("CAPACITOR: PDF aberto perfeitamente na tela.");
+    } catch (erro) {
+        console.error("Erro interno do Capacitor:", erro);
+        alert("Não foi possível abrir o PDF diretamente. Verifique se possui o Google Drive PDF ou Adobe Reader instalado.");
+    }
 }
 
 function gerenciarPDF(acao) {
@@ -402,12 +406,14 @@ function gerenciarPDF(acao) {
     const doc = construirDocumentoPDF(identificadorFechamento, nomeMes, entregasFiltradas);
     const nomeArquivoSalvar = identificadorFechamento.replace(/\s+/g, '_') + '.pdf';
 
+    const isMobile = window.Capacitor && window.Capacitor.isNativePlatform();
+
     if (acao === 'visualizar') {
-        if (window.cordova) abrirPdfNoCelular(doc, nomeArquivoSalvar);
+        if (isMobile) abrirPdfNoCelular(doc, nomeArquivoSalvar);
         else window.open(doc.output('bloburl'), '_blank');
     } 
     else if (acao === 'enviar') {
-        if (!window.cordova) doc.save(nomeArquivoSalvar);
+        if (!isMobile) doc.save(nomeArquivoSalvar);
         let totalAcumulado = entregasFiltradas.reduce((acc, current) => acc + current.valor, 0);
         let mensagemWhats = encodeURIComponent(`Olá, segue o relatório de serviços prestados: *${identificadorFechamento}* no valor total de *R$ ${totalAcumulado.toFixed(2)}*.`);
         window.open(`https://api.whatsapp.com/send?text=${mensagemWhats}`, '_blank');
@@ -415,7 +421,7 @@ function gerenciarPDF(acao) {
     else if (acao === 'fechar') {
         if (!confirm(`Deseja realizar o FECHAMENTO DEFINITIVO?\nOs dados serão arquivados na nuvem.`)) return;
         
-        if (!window.cordova) doc.save(nomeArquivoSalvar);
+        if (!isMobile) doc.save(nomeArquivoSalvar);
         else abrirPdfNoCelular(doc, nomeArquivoSalvar);
         
         const novoFechamento = {
@@ -467,10 +473,12 @@ function gerarPdfHistorico(index) {
     const doc = construirDocumentoPDF(itemHist.id, itemHist.mesRef || "MÊS", itemHist.dados);
     const nomeArquivoSalvar = itemHist.id.replace(/\s+/g, '_') + '.pdf';
 
-    if (window.cordova) abrirPdfNoCelular(doc, nomeArquivoSalvar);
+    const isMobile = window.Capacitor && window.Capacitor.isNativePlatform();
+
+    if (isMobile) abrirPdfNoCelular(doc, nomeArquivoSalvar);
     else window.open(doc.output('bloburl'), '_blank');
 }
-window.getarPdfHistorico = gerarPdfHistorico;
+window.gerarPdfHistorico = gerarPdfHistorico;
 
 function restaurarMes(index) {
     if(confirm("Deseja reabrir este mês fechado? Os dados voltarão para a edição.") && database) {

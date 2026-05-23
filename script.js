@@ -549,7 +549,7 @@ function atualizarHistoricoFechados() {
         tr.innerHTML = `
             <td><strong>${hist.id}</strong></td>
             <td style="display: flex; gap: 8px; justify-content: flex-start; align-items: center;">
-                <button class="btn-acao-tabela" style="background: #1a53ff; color: white;" onclick="gerarPdfHistorico(${index})">👁️ Ver PDF</button>
+                <button class="btn-acao-tabela" style="background: #1a53ff; color: white;" onclick="(${index})">👁️ Ver PDF</button>
                 <button class="btn-acao-tabela btn-vizualizar" onclick="restaurarMes(${index})">🔄 Restaurar</button>
                 <button class="btn-acao-tabela btn-deletar" onclick="excluirHistorico(${index})">🗑️ Apagar</button>
             </td>
@@ -566,7 +566,15 @@ function gerarPdfHistorico(index) {
     }
     const mesRef = itemHist.mesRef || "MÊS";
     const doc = construirDocumentoPDF(itemHist.id, mesRef, itemHist.dados);
-    window.open(doc.output('bloburl'), '_blank');
+    
+    // CORREÇÃO PARA O APP DO CELULAR:
+    // Se o aplicativo do Cordova estiver ativo, salva direto o arquivo no celular
+    if (window.cordova) {
+        doc.save(`Fechamento_${itemHist.id}.pdf`);
+    } else {
+        // Se for no PC, abre na aba normal
+        window.open(doc.output('bloburl'), '_blank');
+    }
 }
 window.gerarPdfHistorico = gerarPdfHistorico;
 

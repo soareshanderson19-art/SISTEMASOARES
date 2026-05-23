@@ -16,7 +16,7 @@ let clientes = [];
 let entregas = [];
 let historicoFechamentos = [];
 
-// Substitua APENAS o bloco dentro do DOMContentLoaded por este:
+// Inicializador Geral do Sistema
 document.addEventListener("DOMContentLoaded", function() {
     console.log("SISTEMA: Inicializando...");
 
@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", function() {
         filtroCliente.addEventListener('change', atualizarTabelaEntregas);
     }
 
-    // PROTEÇÃO CONTRA TRAVAMENTOS (Verifica se o botão realmente existe antes de ativar)
+    // Vinculação correta e segura dos botões do PDF usando os IDs reais do seu HTML
     const btnVisualizar = document.getElementById('btn-pdf-visualizar');
     const btnEnviar = document.getElementById('btn-pdf-enviar');
     const btnFechar = document.getElementById('btn-pdf-fechar');
@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if(btnEnviar) btnEnviar.addEventListener('click', () => gerenciarPDF('enviar'));
     if(btnFechar) btnFechar.addEventListener('click', () => gerenciarPDF('fechar'));
 });
+
 function inicializarOuvintesFirebase() {
     if (!database) return;
 
@@ -140,7 +141,7 @@ function configurarFormularioEntrega() {
             coleta: document.getElementById('end-coleta').value,
             entrega: document.getElementById('end-entrega').value,
             retorno: document.querySelector('input[name="retorno"]:checked').value,
-            express: document.querySelector('input[name="express"]:checked').value, // ADICIONADO EXPRESS AQUI
+            express: document.querySelector('input[name="express"]:checked').value,
             espera: document.getElementById('espera').value,
             valor: parseFloat(document.getElementById('valor').value)
         };
@@ -199,7 +200,6 @@ function atualizarDropdowns() {
     if(clientes.some(c => c.nome === valFiltroAnterior) || valFiltroAnterior === 'todos') filtroCliente.value = valFiltroAnterior;
 }
 
-// CORRIGIDO O NOME DA FUNÇÃO DE ATUALIZAR TABELA NA TELA E ADICIONADO A COLUNA EXPRESS
 function atualizarTabelaEntregas() {
     const corpo = document.getElementById('tabela-corpo');
     const filtroSelect = document.getElementById('filtro-cliente');
@@ -275,7 +275,7 @@ function switchTab(tabId) {
 }
 window.switchTab = switchTab;
 
-// NOVO MOTOR DE PDF ULTRA PROFISSIONAL E COMPLETO COM CAMPO EXPRESS
+// MOTOR DE PDF PROFISSIONAL COM GRID FIXO TIMBRADO
 function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF('p', 'mm', 'a4');
@@ -434,7 +434,7 @@ function construirDocumentoPDF(tituloFechamento, mesReferencia, dadosEntregas) {
     return doc;
 }
 
-// ABERTURA NATIVA COM PLUGINS MODERNOS DO CAPACITOR
+// ABERTURA NATIVA COM PLUGINS NATIVOS OU DESKTOP
 async function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
     if (!window.Capacitor) {
         alert("Ambiente mobile não inicializado.");
@@ -524,33 +524,35 @@ function atualizarHistoricoFechados() {
         return;
     }
 
-    historicoFechamentos.forEach((hist, index) => {
+    historicoFechamentos.forEach((hist) => {
         let tr = document.createElement('tr');
         tr.innerHTML = `
             <td><strong>${hist.id}</strong></td>
             <td style="display: flex; gap: 8px; justify-content: flex-start; align-items: center;">
-                <button class="btn-acao-tabela btn-vizualizar" onclick="restaurarMes(${index})">🔄 Restaurar</button>
-                <button class="btn-acao-tabela btn-deletar" onclick="excluirHistorico(${index})">🗑️ Apagar</button>
+                <button class="btn-acao-tabela btn-vizualizar" onclick="restaurarMes('${hist.fbKey}')">🔄 Restaurar</button>
+                <button class="btn-acao-tabela btn-deletar" onclick="excluirHistorico('${hist.fbKey}')">🗑️ Apagar</button>
             </td>
         `;
         tabela.appendChild(tr);
     });
 }
 
-function restaurarMes(index) {
+function restaurarMes(fbKey) {
     if(confirm("Deseja reabrir este mês fechado? Os dados voltarão para a edição.") && database) {
-        const item = historicoFechamentos[index];
-        item.dados.forEach(ent => database.ref('entregas').push(ent));
-        database.ref(`historico/${item.fbKey}`).remove();
-        switchTab('aba-lancamentos');
-        alert("Dados restaurados com sucesso!");
+        const item = historicoFechamentos.find(h => h.fbKey === fbKey);
+        if(item && item.dados) {
+            item.dados.forEach(ent => database.ref('entregas').push(ent));
+            database.ref(`historico/${fbKey}`).remove();
+            switchTab('aba-lancamentos');
+            alert("Dados restaurados com sucesso!");
+        }
     }
 }
 window.restaurarMes = restaurarMes;
 
-function excluirHistorico(index) {
+function excluirHistorico(fbKey) {
     if(confirm("Isso apagará o histórico permanentemente da nuvem. Continuar?") && database) {
-        database.ref(`historico/${historicoFechamentos[index].fbKey}`).remove();
+        database.ref(`historico/${fbKey}`).remove();
     }
 }
 window.excluirHistorico = excluirHistorico;

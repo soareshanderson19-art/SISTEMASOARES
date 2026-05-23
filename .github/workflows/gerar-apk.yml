@@ -28,7 +28,7 @@ jobs:
       - name: Instalar Dependências e Capacitor
         run: |
           npm init -y
-          npm install @capacitor/core @capacitor/cli
+          npm install @capacitor/core @capacitor/cli @capacitor/android
           npm install @capacitor/filesystem @capacitor-community/file-opener
 
       - name: Preparar Estrutura de Build Web
@@ -43,8 +43,8 @@ jobs:
 
       - name: Inicializar Projeto Android com Capacitor
         run: |
+          npx cap android add || true
           npx cap sync
-          npx cap add android
 
       - name: Compilar o APK Nativo do Android
         run: |

@@ -3,8 +3,8 @@ name: Gerar APK Automático
 on:
   push:
     branches:
-      - main # Executa toda vez que você atualizar a branch 'main'
-  workflow_dispatch: # Permite que você clique em um botão para gerar manualmente
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -17,7 +17,7 @@ jobs:
       - name: Configurar o Node.js
         uses: actions/setup-node@v4
         with:
-          node-node: 18
+          node-version: 18
 
       - name: Configurar o Java (Necessário para Android)
         uses: actions/setup-java@v4
@@ -25,17 +25,14 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Instalar o Cordova (Transformador Web para App)
+      - name: Instalar o Cordova
         run: npm install -g cordova
 
       - name: Criar Projeto Android
         run: |
-          cordova create meu-app com.soaresexpress.app "App"
-          # Copia as configurações e o ícone do seu repositório
+          cordova create meu-app com.soaresexpress.app "Soares Express"
           cp config.xml meu-app/config.xml 2>/dev/null || true
           cp logo.png meu-app/logo.png 2>/dev/null || true
-          
-          # Copia os arquivos do seu site para a pasta do app
           cp -r ./* meu-app/www/ 2>/dev/null || true
           cd meu-app
           cordova plugin add cordova-plugin-inappbrowser

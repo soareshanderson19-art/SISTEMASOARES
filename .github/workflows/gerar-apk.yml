@@ -30,11 +30,18 @@ jobs:
 
       - name: Criar Projeto Android
         run: |
-          cordova create meu-app com.soaresexpress.app "Soares Express"
+          cordova create meu-app com.soaresexpress.app "App"
           cp config.xml meu-app/config.xml 2>/dev/null || true
           cp logo.png meu-app/logo.png 2>/dev/null || true
+          
           cp -r ./* meu-app/www/ 2>/dev/null || true
           cd meu-app
+          
+          # ADICIONANDO OS PLUGINS CORRETOS PARA PDF NO MOBILE
+          cordova plugin add cordova-plugin-inappbrowser
+          cordova plugin add cordova-plugin-file
+          cordova plugin add cordova-plugin-file-opener2
+          
           cordova platform add android
           
       - name: Compilar o APK de Teste (Debug)

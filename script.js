@@ -360,9 +360,10 @@ function construirDocumentoPDF(tituloFechamento, nomeMes, listaServicos) {
 }
 
 // ABERTURA NATIVA COM PLUGINS MODERNOS DO CAPACITOR
+// ABERTURA NATIVA COM PLUGINS MODERNOS DO CAPACITOR
 async function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
-    if (!window.Capacitor || !window.Capacitor.Plugins.Filesystem) {
-        alert("Ambiente mobile não inicializado ou plugins ausentes.");
+    if (!window.Capacitor) {
+        alert("Ambiente mobile não inicializado.");
         return;
     }
 
@@ -370,14 +371,14 @@ async function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
     const pdfBase64 = jsPdfDoc.output('datauristring').split(',')[1];
 
     try {
-        // Grava o arquivo direto no diretório de cache privado do app (Livre de bloqueios do Android)
+        // Grava o arquivo direto no diretório de cache privado do app (Livre de bloqueios de permissão)
         const resultadoGravacao = await window.Capacitor.Plugins.Filesystem.writeFile({
             path: nomeArquivo,
             data: pdfBase64,
             directory: 'CACHE'
         });
 
-        // Abre o leitor usando o FileOpener do Capacitor passando a URL interna segura do arquivo
+        // Abre o leitor passando a URL interna segura do arquivo
         await window.Capacitor.Plugins.FileOpener.open({
             filePath: resultadoGravacao.uri,
             contentType: 'application/pdf'

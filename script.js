@@ -500,10 +500,11 @@ function gerenciarPDF(acao) {
 
     if (acao === 'visualizar') {
         if (window.cordova) {
-            // Se for no aplicativo do celular, ele faz o download do arquivo direto
-            doc.save(nomeArquivoSalvar);
+            // TRANSFORMA O PDF EM LINK E ABRE NO NAVEGADOR DO CELULAR (ONDE O ANDROID PERMITE)
+            const pdfBase64 = doc.output('datauristring');
+            window.open(pdfBase64, '_system');
         } else {
-            // Se for no computador, continua abrindo a aba normal
+            // No computador continua abrindo na aba normal
             window.open(doc.output('bloburl'), '_blank');
         }
     }
@@ -555,7 +556,7 @@ function atualizarHistoricoFechados() {
         tr.innerHTML = `
             <td><strong>${hist.id}</strong></td>
             <td style="display: flex; gap: 8px; justify-content: flex-start; align-items: center;">
-                <button class="btn-acao-tabela" style="background: #1a53ff; color: white;" onclick="(${index})">👁️ Ver PDF</button>
+                <button class="btn-acao-tabela" style="background: #1a53ff; color: white;" onclick="gerarPdfHistorico(${index})">👁️ Ver PDF</button>
                 <button class="btn-acao-tabela btn-vizualizar" onclick="restaurarMes(${index})">🔄 Restaurar</button>
                 <button class="btn-acao-tabela btn-deletar" onclick="excluirHistorico(${index})">🗑️ Apagar</button>
             </td>
@@ -574,8 +575,9 @@ function gerarPdfHistorico(index) {
     const doc = construirDocumentoPDF(itemHist.id, mesRef, itemHist.dados);
 
     if (window.cordova) {
-        // Baixa o arquivo do histórico no celular
-        doc.save(`Fechamento_${itemHist.id.replace(/\s+/g, '_')}.pdf`);
+        // Abre o histórico de forma segura no celular
+        const pdfBase64 = doc.output('datauristring');
+        window.open(pdfBase64, '_system');
     } else {
         // Abre na aba no PC
         window.open(doc.output('bloburl'), '_blank');

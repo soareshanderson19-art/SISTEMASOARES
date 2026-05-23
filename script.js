@@ -499,8 +499,14 @@ function gerenciarPDF(acao) {
     const nomeArquivoSalvar = identificadorFechamento.replace(/\s+/g, '_') + '.pdf';
 
     if (acao === 'visualizar') {
-        window.open(doc.output('bloburl'), '_blank');
-    } 
+        if (window.cordova) {
+            // Se for no aplicativo do celular, ele faz o download do arquivo direto
+            doc.save(nomeArquivoSalvar);
+        } else {
+            // Se for no computador, continua abrindo a aba normal
+            window.open(doc.output('bloburl'), '_blank');
+        }
+    }
     else if (acao === 'enviar') {
         doc.save(nomeArquivoSalvar);
         let totalAcumulado = entregasFiltradas.reduce((acc, current) => acc + current.valor, 0);
@@ -566,13 +572,12 @@ function gerarPdfHistorico(index) {
     }
     const mesRef = itemHist.mesRef || "MÊS";
     const doc = construirDocumentoPDF(itemHist.id, mesRef, itemHist.dados);
-    
-    // CORREÇÃO PARA O APP DO CELULAR:
-    // Se o aplicativo do Cordova estiver ativo, salva direto o arquivo no celular
+
     if (window.cordova) {
-        doc.save(`Fechamento_${itemHist.id}.pdf`);
+        // Baixa o arquivo do histórico no celular
+        doc.save(`Fechamento_${itemHist.id.replace(/\s+/g, '_')}.pdf`);
     } else {
-        // Se for no PC, abre na aba normal
+        // Abre na aba no PC
         window.open(doc.output('bloburl'), '_blank');
     }
 }

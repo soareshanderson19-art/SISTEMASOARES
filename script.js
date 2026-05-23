@@ -367,28 +367,36 @@ function abrirPdfNoCelular(jsPdfDoc, nomeArquivo) {
     }
 
     const pdfOutput = jsPdfDoc.output('arraybuffer');
-    const pastaAlvo = cordova.file.cacheDirectory;
+    
+    // Usar o diretório externo de dados resolve o bloqueio de segurança do Android
+    const pastaAlvo = cordova.file.externalDataDirectory || cordova.file.cacheDirectory;
 
     window.resolveLocalFileSystemURL(pastaAlvo, function (dirEntry) {
         dirEntry.getFile(nomeArquivo, { create: true, exclusive: false }, function (fileEntry) {
             fileEntry.createWriter(function (fileWriter) {
                 fileWriter.onwriteend = function () {
+                    // Executa a abertura com o tipo MIME correto e tratamento detalhado de erro
                     cordova.plugins.fileOpener2.open(
                         fileEntry.toURL(),
                         'application/pdf',
                         {
                             error: function (e) {
-                                alert('Não foi possível exibir o PDF. Instale um leitor de PDF (Ex: Google Drive PDF ou Adobe Reader).');
+                                console.error('Erro detalhado do FileOpener:', e);
+                                alert('Não foi possível abrir o PDF diretamente. Verifique se o Google Drive PDF, Adobe Reader ou similar está definido como padrão.');
                             },
-                            success: function () { console.log('NATIVO: PDF exibido com sucesso.'); }
+                            success: function () { 
+                                console.log('NATIVO: PDF aberto com sucesso na tela.'); 
+                            }
                         }
                     );
                 };
-                fileWriter.onerror = function (e) { alert("Falha ao processar o armazenamento de dados."); };
+                fileWriter.onerror = function (e) { 
+                    alert("Falha ao escrever dados do PDF no armazenamento temporário."); 
+                };
                 fileWriter.write(new Blob([pdfOutput], { type: 'application/pdf' }));
-            }, function(err) { alert("Erro de fluxo: " + JSON.stringify(err)); });
-        }, function(err) { alert("Erro de arquivo: " + JSON.stringify(err)); });
-    }, function(err) { alert("Erro de diretório: " + JSON.stringify(err)); });
+            }, function(err) { alert("Erro ao criar fluxo de escrita: " + JSON.stringify(err)); });
+        }, function(err) { alert("Erro ao mapear arquivo físico: " + JSON.stringify(err)); });
+    }, function(err) { alert("Erro ao acessar diretório do celular: " + JSON.stringify(err)); });
 }
 
 // Função auxiliar interna para processar o download nativo no celular

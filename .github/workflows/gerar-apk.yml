@@ -43,6 +43,19 @@ jobs:
           npx cap add android
           npx cap sync
 
+      - name: Configurar Logo nos Recursos Nativos do Android
+        run: |
+          # Garante que a imagem existe e copia para as pastas de recursos de imagem do Android
+          if [ -f "logo.png" ]; then
+            echo "Injetando logo.png nos recursos nativos do Android..."
+            cp logo.png android/app/src/main/res/drawable/ic_launcher_foreground.png 2>/dev/null || true
+            cp logo.png android/app/src/main/res/mipmap-mdpi/ic_launcher.png 2>/dev/null || true
+            cp logo.png android/app/src/main/res/mipmap-hdpi/ic_launcher.png 2>/dev/null || true
+            cp logo.png android/app/src/main/res/mipmap-xhdpi/ic_launcher.png 2>/dev/null || true
+            cp logo.png android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png 2>/dev/null || true
+            cp logo.png android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png 2>/dev/null || true
+          fi
+
       - name: Compilar o APK Nativo do Android
         run: |
           cd android

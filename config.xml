@@ -20,6 +20,8 @@
     <preference name="KeyboardDisplayRequiresUserAction" value="true" />
     <preference name="MediaPlaybackRequiresUserAction" value="false" />
     
+    <preference name="AndroidXEnabled" value="true" />
+    
     <platform name="android">
         <allow-intent href="market:*" />
         <allow-navigation href="*" />
